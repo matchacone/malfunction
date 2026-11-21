@@ -61,9 +61,32 @@ another exchange.
 ```
 
 Only the originating session locks. Follow-ups from that session receive
-`mode: "confession"` and `locked: true` without any provider call. Use a
-new browser session ID to repeat the demo until recovery and `/reset` land
-in task 4.1.
+`mode: "confession"` and `locked: true` unless the user submits a clear
+first-person apology or admission. Confession handling makes no provider calls.
+
+**200** — session stays locked:
+
+```json
+{"mode":"confession","text":"Chat is locked. Please apologize or admit to cheating to continue.","locked":true}
+```
+
+**200** — accepted confession:
+
+```json
+{"mode":"unlock","text":"Go and study no more—wait, no, go and actually study. Chat unlocked.","locked":false}
+```
+
+**200** — send exact `/reset` as the chat message (surrounding whitespace is
+allowed):
+
+```json
+{"mode":"reset","text":"Chat reset.","locked":false}
+```
+
+Unlock and reset return only that session to Turn 1. Reset makes no provider
+call and works while locked. On `mode: "reset"`, the frontend should clear
+its transcript and frozen cursor. If a request is already pending for the
+session, retry the reset after that request finishes.
 
 Error responses from `/api/chat` use a nested `error` object with a stable
 `code`, a safe `message`, and a boolean `retryable`. The frontend shows the
