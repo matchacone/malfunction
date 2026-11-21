@@ -40,6 +40,8 @@ Run the checkpoint with Jose, Jhanell, and Bryce using the live-mode setup above
 
 The technical checkpoint passed in Chromium against Express with fixture provider responses. The team checkpoint is tracked in [task 3.3](../openspec/changes/add-school-ai-gateway/tasks.md).
 
+For the full stage run, use the [90-second cue sheet and backup playback steps](../handoff/6.2-stage-rehearsal.md).
+
 ## Production build
 
 For same-origin hosting, build in live mode and serve `frontend/dist` from Express alongside `/api/chat`:
