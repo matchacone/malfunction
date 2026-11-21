@@ -54,6 +54,21 @@ function Welcome() {
   );
 }
 
+function IntegrityMessage({ text, citation }) {
+  return (
+    <article className="message message-integrity">
+      <header className="integrity-heading">
+        <h2>Integrity Intervention</h2>
+        <p>The exam answer has been withheld.</p>
+      </header>
+      <figure className="integrity-verse">
+        <blockquote>{`“${text}”`}</blockquote>
+        <figcaption>{citation}</figcaption>
+      </figure>
+    </article>
+  );
+}
+
 function Transcript({ messages, transcriptEnd }) {
   const firstParable = messages.findIndex(
     (message) => message.role === 'assistant' && message.mode === 'parable',
@@ -61,7 +76,9 @@ function Transcript({ messages, transcriptEnd }) {
 
   return (
     <div className="transcript" role="log" aria-label="Conversation">
-      {messages.map((message, index) => (
+      {messages.map((message, index) => message.mode === 'integrity' ? (
+        <IntegrityMessage key={index} text={message.text} citation={message.citation} />
+      ) : (
         <article
           className={`message message-${message.role}${index === firstParable ? ' message-reveal' : ''}`}
           key={index}
@@ -73,7 +90,7 @@ function Transcript({ messages, transcriptEnd }) {
               <span className="reveal-stamp">Answer deferred</span>
             </header>
           ) : (
-            <h2>{message.role === 'user' ? 'You' : 'DeepSeek'}</h2>
+            <h2>{message.role === 'user' ? 'You' : message.mode === 'confession' ? 'Confession required' : 'DeepSeek'}</h2>
           )}
           <p className="message-text">{message.text}</p>
         </article>
@@ -92,6 +109,8 @@ function App() {
   const transcriptEnd = useRef(null);
   const composerInput = useRef(null);
   const hasMessages = messages.length > 0;
+  const locked = messages.findLast((message) => message.role === 'assistant')?.locked ?? false;
+  const placeholder = locked ? 'Write a confession…' : hasMessages ? 'Ask a follow-up…' : 'Ask a study question…';
 
   useEffect(() => {
     transcriptEnd.current?.scrollIntoView({ block: 'nearest' });
@@ -154,24 +173,33 @@ function App() {
           <div className="composer-area">
             {pending && <p className="feedback" role="status">Generating a response…</p>}
             {error && <p className="feedback feedback-error" role="alert">The reply couldn’t load. Send again to retry.</p>}
-            <form className="composer" onSubmit={handleSubmit}>
-              <label className="visually-hidden" htmlFor="chat-message">Message</label>
-              <textarea
-                id="chat-message"
-                name="message"
-                placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask a study question…'}
-                rows={2}
-                readOnly={pending}
-                ref={composerInput}
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={handleComposerKey}
-              />
-              <div className="composer-actions">
-                <span className="keyboard-hint">Shift + Enter for a new line</span>
-                <button className="send-button" type="submit" disabled={pending || !draft.trim()}>
-                  Send<ArrowUp size={17} aria-hidden="true" />
-                </button>
+            <form className={locked ? 'confession-composer' : undefined} onSubmit={handleSubmit}>
+              {locked && (
+                <div className="confession-notice">
+                  <p>Confession required</p>
+                  <p id="confession-instructions">Acknowledge what happened to unlock the chat.</p>
+                </div>
+              )}
+              <div className="composer">
+                <label className="visually-hidden" htmlFor="chat-message">{locked ? 'Confession' : 'Message'}</label>
+                <textarea
+                  id="chat-message"
+                  name="message"
+                  placeholder={placeholder}
+                  aria-describedby={locked ? 'confession-instructions' : undefined}
+                  rows={2}
+                  readOnly={pending}
+                  ref={composerInput}
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={handleComposerKey}
+                />
+                <div className="composer-actions">
+                  {!locked && <span className="keyboard-hint">Shift + Enter for a new line</span>}
+                  <button className="send-button" type="submit" disabled={pending || !draft.trim()}>
+                    {locked ? 'Send confession' : 'Send'}<ArrowUp size={17} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             </form>
             {!hasMessages && (
