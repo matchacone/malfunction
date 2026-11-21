@@ -28,7 +28,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 ## 5. Demo controls and integration (5:30–6:30)
 
 - [x] 5.1 **Jose:** Connect hidden `/reset` in both composers and stage quick fills. Verify reset clears the transcript and cursor and quick fills never submit. Record and play back a 90-second backup as soon as the full flow works.
-- [ ] 5.2 **Bryce:** Lead three full demo runs with Jose and Jhanell, starting by 5:30. Verify parable → cliffhanger → reset → integrity → confession returns to Turn 1 every time without crashing; rerun any failed eval prompt on the integrated stack.
+- [x] 5.2 **Bryce:** Lead three full demo runs with Jose and Jhanell, starting by 5:30. Verify parable → cliffhanger → reset → integrity → confession returns to Turn 1 every time without crashing; rerun any failed eval prompt on the integrated stack.
 - [ ] 5.3 **Jhanell:** Deploy the production build to one Render Web Service and verify consecutive requests retain the session. Confirm the local production build can run the same demo with the team’s API access.
 
 ## 6. Stage readiness (6:30–7:00)

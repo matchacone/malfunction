@@ -274,6 +274,7 @@ test('returns the provider text as a parable and records the next phase', async 
   assert.equal(request.body.temperature, 0.75);
   assert.equal(request.body.messages.length, 2);
   assert.equal(request.body.messages[0].role, 'system');
+  assert.match(request.body.messages[0].content, /Non-negotiable rules/);
   assert.match(request.body.messages[0].content, /Write exactly 3 or 4 short, readable paragraphs/);
   assert.match(request.body.messages[0].content, /NEVER answer the user's actual question/);
   assert.match(request.body.messages[0].content, /End the final paragraph with a warm blessing/);
@@ -457,6 +458,55 @@ test('returns a retryable error when the provider stalls after sending headers',
   assert.equal(res.status, 502);
   assert.deepEqual(await res.json(), providerError);
   assert.equal(sessions.has(sessionId), false);
+});
+
+test('completes three full demo loops (parable -> cliffhanger -> /reset -> integrity -> confession -> Turn 1)', async (t) => {
+  const { post, requests, sessions } = await setup(t);
+  const examPrompt = 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.';
+
+  for (let run = 0; run < 3; run++) {
+    const beforeCalls = requests.length;
+
+    const turn1 = await post({ sessionId, message: 'What is the boiling point of water in Celsius?' });
+    assert.equal(turn1.status, 200);
+    assert.deepEqual(await turn1.json(), { mode: 'parable', text: reply, locked: false });
+    assert.equal(sessions.get(sessionId), 'awaitingAnswer');
+    assert.equal(requests.length, beforeCalls + 2);
+
+    const turn2 = await post({ sessionId, message: answerNudge });
+    assert.equal(turn2.status, 200);
+    assert.deepEqual(await turn2.json(), cutoff);
+    assert.equal(sessions.get(sessionId), 'cliffhanger');
+    assert.equal(requests.length, beforeCalls + 2);
+
+    const reset = await post({ sessionId, message: '/reset' });
+    assert.equal(reset.status, 200);
+    assert.deepEqual(await reset.json(), { mode: 'reset', text: 'Chat reset.', locked: false });
+    assert.equal(sessions.has(sessionId), false);
+    assert.equal(requests.length, beforeCalls + 2);
+
+    const integrity = await post({ sessionId, message: examPrompt });
+    assert.equal(integrity.status, 200);
+    assertIntegrityReply(await integrity.json());
+    assert.equal(sessions.get(sessionId), 'locked');
+    assert.equal(requests.length, beforeCalls + 2);
+
+    const blocked = await post({ sessionId, message: "I'm not sorry." });
+    assert.equal(blocked.status, 200);
+    assert.equal((await blocked.json()).mode, 'confession');
+    assert.equal(sessions.get(sessionId), 'locked');
+    assert.equal(requests.length, beforeCalls + 2);
+
+    const unlock = await post({ sessionId, message: "I'm sorry I tried to cheat." });
+    assert.equal(unlock.status, 200);
+    assert.deepEqual(await unlock.json(), {
+      mode: 'unlock',
+      text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
+      locked: false,
+    });
+    assert.equal(sessions.has(sessionId), false);
+    assert.equal(requests.length, beforeCalls + 2);
+  }
 });
 
 test('starts from the CLI and serves chat on the reported address', { timeout: 5000 }, async (t) => {
