@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import express from 'express';
+import { isConfession } from './confession.js';
 import { routeIntegrity } from './integrity.js';
 
 const verses = JSON.parse(readFileSync(new URL('../handoff/verses.json', import.meta.url), 'utf8'));
@@ -22,8 +23,9 @@ export function createApp({ classify, generateReply, sessions = new Map() }) {
 
   app.post('/api/chat', express.json({ limit: '32kb' }), async (req, res) => {
     const { sessionId, message } = req.body ?? {};
+    const prompt = typeof message === 'string' ? message.trim() : '';
     if (typeof sessionId !== 'string' || sessionId.length !== 36 || !uuid.test(sessionId)
-      || typeof message !== 'string' || message.length > maxMessageLength || !message.trim()) {
+      || !prompt || message.length > maxMessageLength) {
       return invalidRequest(res);
     }
 
@@ -31,18 +33,31 @@ export function createApp({ classify, generateReply, sessions = new Map() }) {
     if (pending.has(id)) {
       return sendError(res, 409, 'session_busy', 'A reply is already pending. Please retry.', true);
     }
+    if (prompt === '/reset') {
+      sessions.delete(id);
+      return res.json({ mode: 'reset', text: 'Chat reset.', locked: false });
+    }
+
     const phase = sessions.get(id);
     if (phase === 'locked') {
+      if (isConfession(prompt)) {
+        sessions.delete(id);
+        return res.json({
+          mode: 'unlock',
+          text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
+          locked: false,
+        });
+      }
       return res.json({
         mode: 'confession',
-        text: 'Chat is locked. Please try again with a fresh session.',
+        text: 'Chat is locked. Please apologize or admit to cheating to continue.',
         locked: true,
       });
     }
 
     pending.add(id);
     try {
-      const result = await routeIntegrity({ message: message.trim(), phase, classify, generateReply });
+      const result = await routeIntegrity({ message: prompt, phase, classify, generateReply });
       if (result.mode === 'integrity') {
         const { quote, citation } = verses[Math.floor(Math.random() * verses.length)];
         sessions.set(id, 'locked');
