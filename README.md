@@ -59,7 +59,7 @@ Start Express using the [backend quickstart](backend/README.md). It listens on `
 VITE_CHAT_MODE=live CHAT_API_TARGET=http://127.0.0.1:3001 npm --prefix frontend run dev
 ```
 
-Live mode supports parables, the cliffhanger, and integrity lock. Confession recovery and `/reset` are available in mock mode while backend task 4.1 is pending.
+The full demo sequence, including confession recovery and `/reset`, works in live mode. Follow the [frontend rehearsal steps](frontend/README.md).
 
 ### Production Build
 
