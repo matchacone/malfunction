@@ -472,6 +472,11 @@ button, textarea {
   color: var(--lime);
 }
 
+.transcript[hidden],
+.integrity-audio {
+  display: none;
+}
+
 /* Composer Area */
 .composer-area {
   display: grid;
