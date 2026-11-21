@@ -33,10 +33,21 @@ Expect HTTP 200 with `mode: "parable"`, nonblank `text`, and `locked: false`.
 ## API handoff for Jose
 
 `POST /api/chat` takes JSON with `sessionId` (use `crypto.randomUUID()` and reuse
-it for the chat) and `message` (nonblank, up to 4,000 UTF-16 code units).
+it for the chat), `message` (nonblank, up to 4,000 UTF-16 code units), and an
+optional `adminMode` (`"regular"` or `"exam"`, defaulting to `"exam"`).
 Keep the transcript client-side; send only the current message.
 
-**200** — parable fixture:
+**200** — regular mode fixture (`adminMode: "regular"`):
+
+```json
+{"mode":"regular","text":"Water boils at 100°C at standard atmospheric pressure.","locked":false}
+```
+
+In `"regular"` mode, unlocked prompts go straight to DeepSeek without running
+integrity checks, parables, or cliffhangers, and clear any pending `awaitingAnswer`
+phase.
+
+**200** — parable fixture (`adminMode: "exam"`):
 
 ```json
 {"mode":"parable","text":"A gardener waited for rain. Peace be with you.","locked":false}

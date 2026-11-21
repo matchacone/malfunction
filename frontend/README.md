@@ -11,11 +11,12 @@ Open the URL printed by Vite. ChatGPT is a read-only preview in both modes.
 
 To rehearse with either setup:
 
-1. Click **Explain a concept** and send the prompt to reveal Bible Mode.
-2. Click **Ask for the answer** and send the prompt to trigger the cliffhanger.
-3. Send `/reset` to clear the transcript and return to the welcome screen.
-4. Click **Try an exam question** and send the prompt to see the verse and locked composer.
-5. Click **Confess** and send the apology. Confirm the normal composer returns, then ask a new question to start another Turn 1. You can also send `/reset` while locked.
+1. Start in **Regular** mode (selected by default in the top-right **School Admin Mode** toggle). Click **Explain a concept** and send to get a direct DeepSeek answer.
+2. Switch the top-right toggle to **Quiz / Exam**. Click **Explain a concept** and send again to reveal Bible Mode and get a parable.
+3. Click **Ask for the answer** and send the prompt to trigger the cliffhanger.
+4. Send `/reset` to clear the transcript and return to the welcome screen.
+5. In **Quiz / Exam** mode, click **Try an exam question** and send the prompt to see the verse and locked composer.
+6. Click **Confess** and send the apology. Confirm the normal composer returns, then ask a new question to start another Turn 1. You can also send `/reset` while locked.
 
 The suggested prompts fill the composer. Press **Send** or Enter to submit.
 

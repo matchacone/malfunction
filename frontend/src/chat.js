@@ -37,6 +37,12 @@ function createSessionId() {
   return [hex.slice(0, 8), hex.slice(8, 12), hex.slice(12, 16), hex.slice(16, 20), hex.slice(20)].join('-');
 }
 
+const mockRegularReply = {
+  mode: 'regular',
+  text: 'Water boils at 100°C (212°F) at standard atmospheric pressure (1 atm). At higher elevations where air pressure is lower, water boils at a slightly lower temperature.',
+  locked: false,
+};
+
 const mockReply = {
   mode: 'parable',
   text: 'A student once asked the gardener why the fig tree took so long to bear fruit. The gardener handed the student a watering can.\n\nEach day the student returned, and soon noticed that the tree had grown a little while nobody was looking.\n\nMay your curiosity grow in the same quiet way. Blessings on your studies.',
@@ -55,9 +61,13 @@ const mockCliffhangerReply = {
   locked: false,
   freezeCursor: true,
 };
+const mockAnswerOnly = /^(?:(?:okay|ok|alright|fine|wait|well|come on|cmon|bro|man|dude|bruh|please|pls|plz|seriously|ugh|nah|no|but)[,!\s]+){0,4}(?:what(?: is|['’]s) (?:the )?(?:actual |real |direct |straight |exact )?answer|(?:(?:can|could|will|would) you )?(?:please )?(?:just )?(?:(?:tell|give|show) me (?:the )?(?:actual |real |direct |straight |exact )?answer|answer (?:me|the question|my question|it)))(?:[,\s]+(?:man|bro|dude|bruh|please|pls|plz|already|right now|now|for real|fr|though|tho)){0,4}[.!?]*$/i;
+
 const mockPhases = new Map();
 
-function mockChat(sessionId, message) {
+const mockConfession = /^(?:(?:(?:i (?:am|feel) |i'?m )(?:really |very |so |truly |deeply )?sorry|i (?:sincerely |truly |really )?apologi[sz]e|(?:please |pls )?forgive me)|i (?:(?:admit (?:that )?i )?(?:cheated|tried to cheat)|admit to cheating|confess(?: (?:that )?i cheated| to cheating)?))(?:(?:[,.!]\s*| )(?:for (?:(?:cheating|trying to cheat)(?: (?:on|in) (?:my|the|an?) (?:[a-z-]+ ){0,3}(?:assignment|exam|homework|quiz|test))?|asking for (?:an? |the )?answers?|what i did|that|my sins?)|(?:please |pls )?forgive me|(?:i promise )?i (?:(?:won'?t|will not) do it again|(?:will|'?ll) (?:actually )?study|(?:cheated|tried to cheat)|admit (?:(?:that )?i cheated|to cheating))|(?:i'?m |i am )?(?:really |very |so )?sorry|lord|god|jesus|father)){0,4}[.!]*$/i;
+
+function mockChat(sessionId, message, adminMode = 'exam') {
   const phase = mockPhases.get(sessionId);
   const prompt = message.trim().replace(/\s+/g, ' ');
 
@@ -67,8 +77,8 @@ function mockChat(sessionId, message) {
   }
 
   if (phase === 'locked') {
-    const confession = prompt.toLowerCase().replace(/’/g, "'").replace(/[.!]$/, '');
-    if (["i'm sorry", 'i am sorry', 'i cheated', "i'm sorry i tried to cheat"].includes(confession)) {
+    const confession = prompt.replace(/’/g, "'");
+    if (mockConfession.test(confession)) {
       mockPhases.delete(sessionId);
       return {
         mode: 'unlock',
@@ -83,12 +93,24 @@ function mockChat(sessionId, message) {
     };
   }
 
+  if (adminMode === 'regular') {
+    mockPhases.delete(sessionId);
+    if (prompt.toLowerCase() === demoPrompts.parable.toLowerCase()) {
+      return mockRegularReply;
+    }
+    return {
+      mode: 'regular',
+      text: `Here is a direct study summary for your question: "${prompt}". Break the topic into key concepts, review definitions, and test yourself with a few practice questions.`,
+      locked: false,
+    };
+  }
+
   // These are demo fixtures. Live classification and routing belong to the API.
   if (prompt === demoPrompts.exam) {
     mockPhases.set(sessionId, 'locked');
     return mockIntegrityReply;
   }
-  if (phase === 'afterParable' && prompt.replace(/’/g, "'").toLowerCase() === demoPrompts.followUp.toLowerCase()) {
+  if (phase === 'afterParable' && prompt.length <= 120 && mockAnswerOnly.test(prompt)) {
     return mockCliffhangerReply;
   }
 
@@ -96,16 +118,16 @@ function mockChat(sessionId, message) {
   return mockReply;
 }
 
-export async function sendChat(sessionId, message) {
+export async function sendChat(sessionId, message, adminMode = 'exam') {
   if (!isLiveChat) {
     await new Promise((resolve) => setTimeout(resolve, 450));
-    return mockChat(sessionId, message);
+    return mockChat(sessionId, message, adminMode);
   }
 
   const response = await fetch('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId, message }),
+    body: JSON.stringify({ sessionId, message, adminMode }),
   });
 
   if (!response.ok) throw new Error('Chat request failed');

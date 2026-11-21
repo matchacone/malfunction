@@ -18,6 +18,7 @@ test('serves the built frontend and chat API from the same origin', async (t) =>
     frontendDir,
     classify: async () => ({ is_cheating: false }),
     generateReply: async () => 'A parable.',
+    generateRegularReply: async () => 'A direct answer.',
   })));
 
   const page = await fetch(`${origin}/`);
@@ -30,12 +31,25 @@ test('serves the built frontend and chat API from the same origin', async (t) =>
   assert.equal(await asset.text(), 'console.log("Campus chat");');
   assert.equal((await fetch(`${origin}/assets/missing.js`)).status, 404);
 
+  const regularChat = await fetch(`${origin}/api/chat`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      sessionId: 'a1234567-1234-4234-8234-123456789abc',
+      message: 'Tell me about rain.',
+      adminMode: 'regular',
+    }),
+  });
+  assert.equal(regularChat.status, 200);
+  assert.deepEqual(await regularChat.json(), { mode: 'regular', text: 'A direct answer.', locked: false });
+
   const chat = await fetch(`${origin}/api/chat`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       sessionId: 'a1234567-1234-4234-8234-123456789abc',
       message: 'Tell me about rain.',
+      adminMode: 'exam',
     }),
   });
   assert.equal(chat.status, 200);

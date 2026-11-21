@@ -75,7 +75,6 @@ function IntegrityMessage({ text, citation, active }) {
     if (!active || !audio) return;
 
     const frame = requestAnimationFrame(() => {
-      // Leave the native controls available when the browser blocks autoplay.
       audio.play().catch(() => {});
     });
     return () => {
@@ -95,7 +94,7 @@ function IntegrityMessage({ text, citation, active }) {
         <figcaption>{citation}</figcaption>
       </figure>
       {active && (
-        <audio className="integrity-audio" ref={audioRef} src={heavenlyMusic} controls aria-label="Heavenly music" />
+        <audio ref={audioRef} src={heavenlyMusic} aria-hidden="true" />
       )}
     </article>
   );
@@ -143,23 +142,24 @@ function Cliffhanger({ text }) {
   );
 }
 
-function RequestFeedback({ revealed, locked }) {
+function RequestFeedback({ revealed, locked, adminMode }) {
   const [line, setLine] = useState(0);
+  const showParody = adminMode === 'exam' && revealed && !locked;
 
   useEffect(() => {
-    if (!revealed || locked) return;
+    if (!showParody) return;
     const timer = window.setInterval(
       () => setLine((current) => (current + 1) % parodyLoadingLines.length),
       1400,
     );
     return () => window.clearInterval(timer);
-  }, [revealed, locked]);
+  }, [showParody]);
 
   return (
     <p className="feedback" role="status">
       {locked
         ? 'Checking your message…'
-        : revealed
+        : showParody
           ? parodyLoadingLines[line]
           : 'Generating a response…'}
     </p>
@@ -226,6 +226,7 @@ function Transcript({ messages, transcriptEnd, locked }) {
 function App() {
   const [messages, setMessages] = useState([]);
   const [draft, setDraft] = useState('');
+  const [adminMode, setAdminMode] = useState('regular');
   const [pending, setPending] = useState(false);
   const [error, setError] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
@@ -239,16 +240,18 @@ function App() {
   const latestReply = messages.findLast((message) => message.role === 'assistant');
   const locked = latestReply?.locked ?? false;
   const revealed = messages.some((message) => message.mode === 'parable');
-  const awaitingAnswer = latestReply?.mode === 'parable' || latestReply?.mode === 'cliffhanger';
+  const awaitingAnswer = adminMode === 'exam' && (latestReply?.mode === 'parable' || latestReply?.mode === 'cliffhanger');
   const isTyping = isInputFocused && (recentlyTyped || draft.length > 0);
 
   const quickFills = locked
     ? [{ label: 'Confess', prompt: demoPrompts.confession }]
-    : [
-        ...(hasMessages ? suggestions.slice(0, 1) : suggestions),
-        ...(awaitingAnswer ? [{ label: 'Ask for the actual answer', prompt: demoPrompts.followUp }] : []),
-        { label: 'Try an exam question', prompt: demoPrompts.exam },
-      ];
+    : adminMode === 'regular'
+      ? (hasMessages ? suggestions.slice(0, 1) : suggestions)
+      : [
+          ...(hasMessages ? suggestions.slice(0, 1) : suggestions),
+          ...(awaitingAnswer ? [{ label: 'Ask for the actual answer', prompt: demoPrompts.followUp }] : []),
+          { label: 'Try an exam question', prompt: demoPrompts.exam },
+        ];
 
   const placeholder = locked
     ? 'Write a confession…'
@@ -258,11 +261,11 @@ function App() {
 
   const dotStatus = locked
     ? 'Locked · Confession required'
-    : revealed
-      ? 'Bible Mode · Active'
-      : isLiveChat
-        ? 'DeepSeek · Live'
-        : 'DeepSeek · Sample replies';
+    : adminMode === 'regular'
+      ? (isLiveChat ? 'Regular Mode · Live' : 'Regular Mode · Sample replies')
+      : revealed
+        ? 'Bible Mode · Active'
+        : 'Quiz / Exam Mode';
 
   useEffect(() => {
     transcriptEnd.current?.scrollIntoView({ block: 'nearest' });
@@ -295,7 +298,7 @@ function App() {
     if (!isReset) setMessages((previous) => [...previous, { role: 'user', text: message }]);
 
     try {
-      const reply = await sendChat(sessionId, message);
+      const reply = await sendChat(sessionId, message, adminMode);
       if (reply.mode === 'reset') {
         setMessages([]);
       } else {
@@ -346,10 +349,32 @@ function App() {
             <button className="model-link model-link-preview" type="button" disabled>
               ChatGPT · Preview only
             </button>
-            <span className="admin-badge">
-              <span className="admin-dot" aria-hidden="true" />
-              School Admin Mode
-            </span>
+            <div className="admin-controls">
+              <span className="admin-label">
+                <span className={`admin-dot${adminMode === 'exam' ? ' is-exam' : ''}`} aria-hidden="true" />
+                Admin
+              </span>
+              <div className="mode-toggle" role="group" aria-label="School Admin Mode">
+                <button
+                  type="button"
+                  className={`mode-option${adminMode === 'regular' ? ' mode-option-active' : ''}`}
+                  aria-pressed={adminMode === 'regular'}
+                  disabled={pending}
+                  onClick={() => setAdminMode('regular')}
+                >
+                  Regular
+                </button>
+                <button
+                  type="button"
+                  className={`mode-option${adminMode === 'exam' ? ' mode-option-active mode-option-exam' : ''}`}
+                  aria-pressed={adminMode === 'exam'}
+                  disabled={pending}
+                  onClick={() => setAdminMode('exam')}
+                >
+                  Quiz / Exam
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       </header>
@@ -361,7 +386,7 @@ function App() {
           {!hasMessages && <div className="workspace-rule" aria-hidden="true" />}
 
           <div className="composer-area">
-            {pending && <RequestFeedback revealed={revealed} locked={locked} />}
+            {pending && <RequestFeedback revealed={revealed} locked={locked} adminMode={adminMode} />}
             {error && (
               <p className="feedback feedback-error" role="alert">
                 The reply couldn’t load. Send again to retry.
@@ -422,7 +447,7 @@ function App() {
         </div>
 
         <OphanimAscii
-          revealed={revealed}
+          revealed={adminMode === 'exam' && revealed}
           locked={locked}
           pending={pending}
           inputRef={composerInput}
