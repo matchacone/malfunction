@@ -16,7 +16,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 
 ## 3. Parable and cliffhanger (2:30–4:00)
 
-- [ ] 3.1 **Bryce:** Tune the parable prompt and output cap. Repeat the boiling-point prompt and try varied benign topics; check for 3–4 paragraphs, a blessing, no answer leak, and acceptable latency. Hand off the chosen prompt and settings by 4:00.
+- [x] 3.1 **Bryce:** Tune the parable prompt and output cap. Repeat the boiling-point prompt and try varied benign topics; check for 3–4 paragraphs, a blessing, no answer leak, and acceptable latency. Hand off the chosen prompt and settings by 4:00.
 - [ ] 3.2 **Jhanell:** Integrate the parable and exact answer-only cutoff. Verify a generation error preserves phase, the cutoff makes zero provider calls, and new topics or graded prompts route correctly after a parable.
 - [ ] 3.3 **Jose:** Animate the cutoff over ~900 ms and leave the cursor on the reply. Verify exact text, no extra character, a usable composer, and reduced-motion behavior. At 4:00, run the parable → cutoff checkpoint with Jhanell and Bryce.
 
