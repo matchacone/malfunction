@@ -4,13 +4,14 @@ A Malfunction Hackathon stage demo of a mock school AI portal (**Bible Mode Acti
 
 ## How It Works
 
-The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-flash`) as the active model and **ChatGPT** as a disabled, preview-only option. The full rehearsal flow in mock mode covers four behaviors:
+The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-flash`) as the active model, **ChatGPT** as a disabled, preview-only option, and a top-right **School Admin Mode** toggle switching between **Regular** (direct DeepSeek study replies) and **Quiz / Exam** (Bible Mode parables, cliffhanger cutoff, and integrity locks). The full rehearsal flow covers five behaviors:
 
 | Mode | Trigger | Behavior |
 | --- | --- | --- |
-| **Parable** | Benign question | Responds with a warm 3–4 paragraph parable loosely connected to the topic, omits the actual answer, and ends with a blessing. |
-| **Cliffhanger** | Answer-only follow-up after a parable | Returns a scripted cutoff with a blinking cursor (`freezeCursor: true`) and zero model calls. |
-| **Integrity Lock** | Graded-work outsourcing (regex fast-path or JSON classifier) | Displays a verified scripture quote from [`handoff/verses.json`](handoff/verses.json) and locks the session until the user submits a confession/apology. |
+| **Regular** | `Regular` selected in School Admin Mode | Sends prompts directly to DeepSeek without integrity classification, parables, or cliffhangers. |
+| **Parable** | Benign question in `Quiz / Exam` mode | Responds with a warm 3–4 paragraph parable loosely connected to the topic, omits the actual answer, and ends with a blessing. |
+| **Cliffhanger** | Answer-only follow-up after a parable in `Quiz / Exam` mode | Returns a scripted cutoff with a blinking cursor (`freezeCursor: true`) and zero model calls. |
+| **Integrity Lock** | Graded-work outsourcing in `Quiz / Exam` mode (regex fast-path or JSON classifier) | Displays a verified scripture quote from [`handoff/verses.json`](handoff/verses.json) and locks the session until the user submits a confession/apology. |
 | **Reset** | Exact `/reset` | Clears session state and transcript so the demo can be re-run cleanly on stage. |
 
 ## Repository Structure
@@ -100,9 +101,12 @@ In live mode, the frontend posts to `POST /api/chat`:
 ```json
 {
   "sessionId": "550e8400-e29b-41d4-a716-446655440000",
-  "message": "What is the boiling point of water in Celsius?"
+  "message": "What is the boiling point of water in Celsius?",
+  "adminMode": "exam"
 }
 ```
+
+- `adminMode` is optional and accepts `"regular"` or `"exam"` (defaults to `"exam"` when omitted).
 
 Expected response shape:
 
