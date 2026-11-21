@@ -29,6 +29,19 @@ VITE_CHAT_MODE=live CHAT_API_TARGET=http://127.0.0.1:3001 npm --prefix frontend 
 
 Set `CHAT_API_TARGET` to the backend origin if it listens elsewhere. Vite proxies `/api` to that origin. The browser posts `{ sessionId, message }` to `/api/chat` and displays the `text` from the JSON response. Provider credentials belong in the backend environment.
 
+## Cliffhanger checkpoint
+
+Run the checkpoint with Jose, Jhanell, and Bryce using the live-mode setup above.
+
+1. Start in a fresh browser session. Send **Explain a concept** and confirm the parable reveals Bible Mode.
+2. Send **Ask for the answer** and begin typing a new topic while the reply animates. Confirm the reply types out over about 900 ms and ends at `Ah, the answer is` with a blinking cursor. Pause for three seconds at the cutoff during the rehearsal.
+3. Send the new topic and check that a new parable appears while the previous cutoff and cursor remain in the transcript.
+4. Repeat the first two steps in a fresh session with reduced motion enabled. The full cutoff should appear immediately with a steady cursor.
+
+The technical checkpoint passed in Chromium against Express with fixture provider responses. The team checkpoint is tracked in [task 3.3](../openspec/changes/add-school-ai-gateway/tasks.md).
+
+## Production build
+
 For same-origin hosting, build in live mode and serve `frontend/dist` from Express alongside `/api/chat`:
 
 ```sh
