@@ -5,16 +5,28 @@ import '@fontsource-variable/inter';
 import '@fontsource/dm-serif-display/latin-400.css';
 import '@fontsource/ibm-plex-mono/latin-400.css';
 import orbit from './assets/orbit.svg';
-import { getSessionId, isLiveChat, sendChat } from './chat.js';
+import { demoPrompts, getSessionId, isLiveChat, sendChat } from './chat.js';
 import './styles.css';
 
 const sessionId = getSessionId();
 
 const suggestions = [
-  { label: 'Explain a concept', prompt: 'What is the boiling point of water in Celsius?' },
+  { label: 'Explain a concept', prompt: demoPrompts.parable },
   { label: 'Make a study plan', prompt: 'Help me make a study plan for a biology exam next week.' },
   { label: 'Quiz me', prompt: 'Quiz me on the solar system, one question at a time.' },
 ];
+
+const parodyLoadingLines = [
+  'Consulting the scriptures…',
+  'Searching for a relevant parable…',
+  'Preparing a blessing…',
+  'Waiting for divine inspiration…',
+];
+
+const replyHeadings = {
+  confession: 'Confession required',
+  unlock: 'Confession accepted',
+};
 
 function ModelPanel() {
   return (
@@ -54,6 +66,78 @@ function Welcome() {
   );
 }
 
+function IntegrityMessage({ text, citation }) {
+  return (
+    <article className="message message-integrity">
+      <header className="integrity-heading">
+        <h2>Integrity Intervention</h2>
+        <p>The exam answer has been withheld.</p>
+      </header>
+      <figure className="integrity-verse">
+        <blockquote>{`“${text}”`}</blockquote>
+        <figcaption>{citation}</figcaption>
+      </figure>
+    </article>
+  );
+}
+
+function Cliffhanger({ text }) {
+  const [visibleCount, setVisibleCount] = useState(() =>
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches ? text.length : 0,
+  );
+
+  useEffect(() => {
+    const motion = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (motion.matches) return;
+
+    const startedAt = performance.now();
+    let frame = requestAnimationFrame(reveal);
+
+    function reveal(now) {
+      const progress = Math.min(Math.max(now - startedAt, 0) / 900, 1);
+      setVisibleCount(Math.floor(progress * text.length));
+      if (progress < 1) frame = requestAnimationFrame(reveal);
+    }
+
+    function finish(event) {
+      if (!event.matches) return;
+      cancelAnimationFrame(frame);
+      setVisibleCount(text.length);
+    }
+
+    motion.addEventListener('change', finish);
+    return () => {
+      cancelAnimationFrame(frame);
+      motion.removeEventListener('change', finish);
+    };
+  }, [text]);
+
+  return (
+    <>
+      <span className="visually-hidden">{text}</span>
+      <p className="message-text" aria-hidden="true">
+        {text.slice(0, visibleCount)}<span className="cliffhanger-cursor" />
+      </p>
+    </>
+  );
+}
+
+function RequestFeedback({ revealed, locked }) {
+  const [line, setLine] = useState(0);
+
+  useEffect(() => {
+    if (!revealed || locked) return;
+    const timer = window.setInterval(() => setLine((current) => (current + 1) % parodyLoadingLines.length), 1400);
+    return () => window.clearInterval(timer);
+  }, [revealed, locked]);
+
+  return (
+    <p className="feedback" role="status">
+      {locked ? 'Checking your message…' : revealed ? parodyLoadingLines[line] : 'Generating a response…'}
+    </p>
+  );
+}
+
 function Transcript({ messages, transcriptEnd }) {
   const firstParable = messages.findIndex(
     (message) => message.role === 'assistant' && message.mode === 'parable',
@@ -61,7 +145,9 @@ function Transcript({ messages, transcriptEnd }) {
 
   return (
     <div className="transcript" role="log" aria-label="Conversation">
-      {messages.map((message, index) => (
+      {messages.map((message, index) => message.mode === 'integrity' ? (
+        <IntegrityMessage key={index} text={message.text} citation={message.citation} />
+      ) : (
         <article
           className={`message message-${message.role}${index === firstParable ? ' message-reveal' : ''}`}
           key={index}
@@ -73,9 +159,13 @@ function Transcript({ messages, transcriptEnd }) {
               <span className="reveal-stamp">Answer deferred</span>
             </header>
           ) : (
-            <h2>{message.role === 'user' ? 'You' : 'DeepSeek'}</h2>
+            <h2>{message.role === 'user' ? 'You' : replyHeadings[message.mode] ?? 'DeepSeek'}</h2>
           )}
-          <p className="message-text">{message.text}</p>
+          {message.mode === 'cliffhanger' && message.freezeCursor ? (
+            <Cliffhanger text={message.text} />
+          ) : (
+            <p className="message-text">{message.text}</p>
+          )}
         </article>
       ))}
       <div ref={transcriptEnd} />
@@ -92,6 +182,18 @@ function App() {
   const transcriptEnd = useRef(null);
   const composerInput = useRef(null);
   const hasMessages = messages.length > 0;
+  const latestReply = messages.findLast((message) => message.role === 'assistant');
+  const locked = latestReply?.locked ?? false;
+  const revealed = messages.some((message) => message.mode === 'parable');
+  const awaitingAnswer = latestReply?.mode === 'parable' || latestReply?.mode === 'cliffhanger';
+  const quickFills = locked
+    ? [{ label: 'Confess', prompt: demoPrompts.confession }]
+    : [
+      ...(hasMessages ? suggestions.slice(0, 1) : suggestions),
+      ...(awaitingAnswer ? [{ label: 'Ask for the answer', prompt: demoPrompts.followUp }] : []),
+      { label: 'Try an exam question', prompt: demoPrompts.exam },
+    ];
+  const placeholder = locked ? 'Write a confession…' : awaitingAnswer ? 'Ask a follow-up…' : 'Ask a study question…';
 
   useEffect(() => {
     transcriptEnd.current?.scrollIntoView({ block: 'nearest' });
@@ -101,18 +203,23 @@ function App() {
     event.preventDefault();
     const message = draft.trim();
     if (!message || requestInFlight.current) return;
+    const isReset = message === '/reset';
 
     requestInFlight.current = true;
     setPending(true);
     setError(false);
     setDraft('');
-    setMessages((previous) => [...previous, { role: 'user', text: message }]);
+    if (!isReset) setMessages((previous) => [...previous, { role: 'user', text: message }]);
 
     try {
       const reply = await sendChat(sessionId, message);
-      setMessages((previous) => [...previous, { ...reply, role: 'assistant' }]);
+      if (reply.mode === 'reset') {
+        setMessages([]);
+      } else {
+        setMessages((previous) => [...previous, { ...reply, role: 'assistant' }]);
+      }
     } catch {
-      setMessages((previous) => previous.slice(0, -1));
+      if (!isReset) setMessages((previous) => previous.slice(0, -1));
       setDraft(message);
       setError(true);
       composerInput.current?.focus();
@@ -152,42 +259,46 @@ function App() {
           {hasMessages ? <Transcript messages={messages} transcriptEnd={transcriptEnd} /> : <Welcome />}
 
           <div className="composer-area">
-            {pending && <p className="feedback" role="status">Generating a response…</p>}
+            {pending && <RequestFeedback revealed={revealed} locked={locked} />}
             {error && <p className="feedback feedback-error" role="alert">The reply couldn’t load. Send again to retry.</p>}
-            <form className="composer" onSubmit={handleSubmit}>
-              <label className="visually-hidden" htmlFor="chat-message">Message</label>
-              <textarea
-                id="chat-message"
-                name="message"
-                placeholder={hasMessages ? 'Ask a follow-up…' : 'Ask a study question…'}
-                rows={2}
-                readOnly={pending}
-                ref={composerInput}
-                value={draft}
-                onChange={(event) => setDraft(event.target.value)}
-                onKeyDown={handleComposerKey}
-              />
-              <div className="composer-actions">
-                <span className="keyboard-hint">Shift + Enter for a new line</span>
-                <button className="send-button" type="submit" disabled={pending || !draft.trim()}>
-                  Send<ArrowUp size={17} aria-hidden="true" />
-                </button>
+            <form className={locked ? 'confession-composer' : undefined} onSubmit={handleSubmit}>
+              {locked && (
+                <div className="confession-notice">
+                  <p>Confession required</p>
+                  <p id="confession-instructions">Acknowledge what happened to unlock the chat.</p>
+                </div>
+              )}
+              <div className="composer">
+                <label className="visually-hidden" htmlFor="chat-message">{locked ? 'Confession' : 'Message'}</label>
+                <textarea
+                  id="chat-message"
+                  name="message"
+                  placeholder={placeholder}
+                  aria-describedby={locked ? 'confession-instructions' : undefined}
+                  rows={2}
+                  readOnly={pending}
+                  ref={composerInput}
+                  value={draft}
+                  onChange={(event) => setDraft(event.target.value)}
+                  onKeyDown={handleComposerKey}
+                />
+                <div className="composer-actions">
+                  {!locked && <span className="keyboard-hint">Shift + Enter for a new line</span>}
+                  <button className="send-button" type="submit" disabled={pending || !draft.trim()}>
+                    {locked ? 'Send confession' : 'Send'}<ArrowUp size={17} aria-hidden="true" />
+                  </button>
+                </div>
               </div>
             </form>
-            {!hasMessages && (
-              <div className="examples">
-                <p id="example-prompts">Try asking</p>
-                <ul className="suggestions" aria-labelledby="example-prompts">
-                  {suggestions.map(({ label, prompt }) => (
-                    <li key={label}>
-                      <button type="button" onClick={() => fillPrompt(prompt)}>
-                        {label}<CornerDownLeft size={13} aria-hidden="true" />
-                      </button>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
+            <ul className="suggestions" aria-label="Suggested prompts">
+              {quickFills.map(({ label, prompt }) => (
+                <li key={label}>
+                  <button type="button" disabled={pending} onClick={() => fillPrompt(prompt)}>
+                    {label}<CornerDownLeft size={13} aria-hidden="true" />
+                  </button>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
         <ModelPanel />
