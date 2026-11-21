@@ -14,11 +14,11 @@ async function request(path, options) {
   return response;
 }
 
-async function chat(message, mode, locked = false) {
+async function chat(message, mode, { locked = false, adminMode = 'exam' } = {}) {
   const response = await request('/api/chat', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ sessionId, message }),
+    body: JSON.stringify({ sessionId, message, adminMode }),
   });
   const reply = await response.json();
   assert.equal(reply.mode, mode);
@@ -36,6 +36,7 @@ assert.match(asset.headers.get('content-type') ?? '', /javascript/i);
 await asset.arrayBuffer();
 console.log('Production page and JavaScript served from the same origin.');
 
+await chat('What is the boiling point of water in Celsius?', 'regular', { adminMode: 'regular' });
 await chat('What is the boiling point of water in Celsius?', 'parable');
 const cliffhanger = await chat(followUp, 'cliffhanger');
 assert.equal(cliffhanger.text, 'Ah, the answer is');
@@ -44,12 +45,12 @@ await chat('/reset', 'reset');
 const lock = await chat(
   'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.',
   'integrity',
-  true,
+  { locked: true },
 );
 assert.ok(typeof lock.citation === 'string' && lock.citation.trim(), 'Missing verse citation');
-await chat("I'm not sorry.", 'confession', true);
+await chat("I'm not sorry.", 'confession', { locked: true });
 const unlock = await chat("I'm sorry I tried to cheat.", 'unlock');
 assert.equal(unlock.text, 'Go and study no more—wait, no, go and actually study. Chat unlocked.');
 await chat(followUp, 'parable');
 await chat('/reset', 'reset');
-console.log('Production chat passed: parable, exact cutoff, reset, integrity lock, confession, and back to Turn 1.');
+console.log('Production chat passed: regular mode, parable, exact cutoff, reset, integrity lock, confession, and back to Turn 1.');

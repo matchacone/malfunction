@@ -1,6 +1,6 @@
 import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
-import { createDeepSeekClassifier, createDeepSeekClient } from './deepseek.js';
+import { createDeepSeekClassifier, createDeepSeekClient, createDeepSeekRegularClient } from './deepseek.js';
 
 const apiKey = process.env.DEEPSEEK_API_KEY?.trim();
 if (!apiKey) {
@@ -19,6 +19,7 @@ const providerOptions = {
 const server = createApp({
   classify: createDeepSeekClassifier(providerOptions),
   generateReply: createDeepSeekClient(providerOptions),
+  generateRegularReply: createDeepSeekRegularClient(providerOptions),
   frontendDir: fileURLToPath(new URL('../frontend/dist/', import.meta.url)),
 }).listen(port, host, (error) => {
   if (error) {

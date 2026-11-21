@@ -6,12 +6,13 @@ import { createServer } from 'node:http';
 import { createInterface } from 'node:readline';
 import { test } from 'node:test';
 import { createApp } from '../app.js';
-import { createDeepSeekClassifier, createDeepSeekClient } from '../deepseek.js';
+import { createDeepSeekClassifier, createDeepSeekClient, createDeepSeekRegularClient } from '../deepseek.js';
 import { completion as sendCompletion, listen } from '../test-support/http.js';
 
 const sessionId = 'a1234567-1234-4234-8234-123456789abc';
 const otherSessionId = 'b1234567-1234-4234-8234-123456789abc';
 const reply = 'A gardener waited for rain. Peace be with you.';
+const regularReply = 'Water boils at 100 degrees Celsius at standard atmospheric pressure.';
 const answerNudge = "Okay but what's the actual answer?";
 const cutoff = { mode: 'cliffhanger', text: 'Ah, the answer is', locked: false, freezeCursor: true };
 const verses = JSON.parse(readFileSync(new URL('../../handoff/verses.json', import.meta.url), 'utf8'));
@@ -26,11 +27,13 @@ function completion(res, content = reply, finishReason = 'stop') {
 
 async function setup(t, {
   respond = (res) => completion(res),
+  respondRegular = (res) => completion(res, regularReply),
   respondToClassifier = (res) => completion(res, benignVerdict),
   timeoutMs,
 } = {}) {
   const requests = [];
   let generationCount = 0;
+  let regularCount = 0;
   let classificationCount = 0;
   const upstream = await listen(t, createServer(async (req, res) => {
     let body = '';
@@ -39,8 +42,10 @@ async function setup(t, {
     requests.push({ path: req.url, method: req.method, authorization: req.headers.authorization, body: payload });
     if (payload.response_format?.type === 'json_object') {
       await respondToClassifier(res, ++classificationCount);
-    } else {
+    } else if (payload.messages?.[0]?.content?.includes('Bible Mode Active')) {
       await respond(res, ++generationCount);
+    } else {
+      await respondRegular(res, ++regularCount);
     }
   }));
   const sessions = new Map();
@@ -53,6 +58,7 @@ async function setup(t, {
   const api = await listen(t, createServer(createApp({
     classify: createDeepSeekClassifier(options),
     generateReply: createDeepSeekClient(options),
+    generateRegularReply: createDeepSeekRegularClient(options),
     sessions,
   })));
   const postRaw = (body) => fetch(`${api}/api/chat`, {
@@ -134,6 +140,10 @@ for (const message of [
   "I'm sorry I tried to cheat.",
   "I'm sorry for cheating. I won't do it again.",
   "I’m sorry, I cheated.",
+  'im so sorry for cheating please forgive me',
+  'im sorry i wont do it again',
+  'please forgive me for cheating',
+  'i confess to cheating, please forgive me',
 ]) {
   test(`a clear confession unlocks only its session: ${message}`, async (t) => {
     const { post, requests, sessions } = await setup(t);
@@ -290,7 +300,14 @@ test('returns the exact cutoff for an answer-only follow-up without calling Deep
   assert.equal(sessions.get(sessionId), 'awaitingAnswer');
   assert.equal(requests.length, 2);
 
-  for (const message of [answerNudge, '  Okay, but what’s the actual answer?  ', 'Just tell me the answer.']) {
+  for (const message of [
+    answerNudge,
+    '  Okay, but what’s the actual answer?  ',
+    'Just tell me the answer.',
+    'ok just give me the answer man please',
+    'bro please just tell me the real answer',
+    'come on, just answer the question already!',
+  ]) {
     const response = await post({ sessionId, message });
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), cutoff);
@@ -356,6 +373,9 @@ test('rejects invalid chat input before calling DeepSeek', async (t) => {
     await post({ sessionId, message: '   ' }),
     await post({ sessionId, message: 123 }),
     await post({ sessionId, message: 'x'.repeat(4001) }),
+    await post({ sessionId, message: 'Hello', adminMode: 'invalid' }),
+    await post({ sessionId, message: 'Hello', adminMode: 123 }),
+    await post({ sessionId, message: 'Hello', adminMode: null }),
     await postRaw('{broken json'),
   ]) {
     assert.equal(response.status, 400);
@@ -458,6 +478,88 @@ test('returns a retryable error when the provider stalls after sending headers',
   assert.equal(res.status, 502);
   assert.deepEqual(await res.json(), providerError);
   assert.equal(sessions.has(sessionId), false);
+});
+
+test('regular mode prompts DeepSeek directly without classification, parable, or integrity lock', async (t) => {
+  const { post, requests, sessions } = await setup(t, {
+    respondRegular: (res) => completion(res, ` ${regularReply} `),
+  });
+  const examPrompt = 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.';
+
+  const res = await post({ sessionId, message: '  What is the boiling point of water in Celsius?  ', adminMode: 'regular' });
+  assert.equal(res.status, 200);
+  assert.deepEqual(await res.json(), { mode: 'regular', text: regularReply, locked: false });
+  assert.equal(sessions.has(sessionId), false);
+  assert.equal(requests.length, 1);
+  const [request] = requests;
+  assert.equal(request.body.model, 'deepseek-flash');
+  assert.deepEqual(request.body.thinking, { type: 'disabled' });
+  assert.equal(request.body.max_tokens, 1024);
+  assert.equal(request.body.temperature, 0.7);
+  assert.equal(request.body.response_format, undefined);
+  assert.ok(!request.body.messages[0].content.includes('Bible Mode Active'));
+  assert.deepEqual(request.body.messages[1], { role: 'user', content: 'What is the boiling point of water in Celsius?' });
+
+  const examInRegular = await post({ sessionId, message: examPrompt, adminMode: 'regular' });
+  assert.equal(examInRegular.status, 200);
+  assert.deepEqual(await examInRegular.json(), { mode: 'regular', text: regularReply, locked: false });
+  assert.equal(sessions.has(sessionId), false);
+  assert.equal(requests.length, 2);
+});
+
+test('switching between regular and exam modes resets awaitingAnswer and keeps locks enforced', async (t) => {
+  const { post, requests, sessions } = await setup(t);
+
+  const examTurn1 = await post({ sessionId, message: 'What is the boiling point of water in Celsius?', adminMode: 'exam' });
+  assert.equal(examTurn1.status, 200);
+  assert.equal((await examTurn1.json()).mode, 'parable');
+  assert.equal(sessions.get(sessionId), 'awaitingAnswer');
+
+  const regularFollowUp = await post({ sessionId, message: answerNudge, adminMode: 'regular' });
+  assert.equal(regularFollowUp.status, 200);
+  assert.deepEqual(await regularFollowUp.json(), { mode: 'regular', text: regularReply, locked: false });
+  assert.equal(sessions.has(sessionId), false);
+
+  const examAfterRegular = await post({ sessionId, message: answerNudge, adminMode: 'exam' });
+  assert.equal(examAfterRegular.status, 200);
+  assert.equal((await examAfterRegular.json()).mode, 'parable');
+  assert.equal(sessions.get(sessionId), 'awaitingAnswer');
+
+  const examCliffhanger = await post({ sessionId, message: answerNudge, adminMode: 'exam' });
+  assert.equal(examCliffhanger.status, 200);
+  assert.deepEqual(await examCliffhanger.json(), cutoff);
+  assert.equal(sessions.get(sessionId), 'cliffhanger');
+
+  sessions.set(sessionId, 'locked');
+  const beforeLockCalls = requests.length;
+  const blockedInRegular = await post({ sessionId, message: 'What is the boiling point of water?', adminMode: 'regular' });
+  assert.equal(blockedInRegular.status, 200);
+  assert.equal((await blockedInRegular.json()).mode, 'confession');
+  assert.equal(sessions.get(sessionId), 'locked');
+  assert.equal(requests.length, beforeLockCalls);
+
+  const unlockInRegular = await post({ sessionId, message: "I'm sorry I tried to cheat.", adminMode: 'regular' });
+  assert.equal(unlockInRegular.status, 200);
+  assert.equal((await unlockInRegular.json()).mode, 'unlock');
+  assert.equal(sessions.has(sessionId), false);
+
+  const resumedRegular = await post({ sessionId, message: 'What is the boiling point of water?', adminMode: 'regular' });
+  assert.equal(resumedRegular.status, 200);
+  assert.deepEqual(await resumedRegular.json(), { mode: 'regular', text: regularReply, locked: false });
+});
+
+test('regular mode provider failure returns retryable error without changing existing phase', async (t) => {
+  const { post, sessions } = await setup(t, {
+    respondRegular: (res) => {
+      res.writeHead(500, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify({ error: { message: 'upstream failure' } }));
+    },
+  });
+  sessions.set(sessionId, 'awaitingAnswer');
+  const failed = await post({ sessionId, message: 'Explain osmosis.', adminMode: 'regular' });
+  assert.equal(failed.status, 502);
+  assert.deepEqual(await failed.json(), providerError);
+  assert.equal(sessions.get(sessionId), 'awaitingAnswer');
 });
 
 test('completes three full demo loops (parable -> cliffhanger -> /reset -> integrity -> confession -> Turn 1)', async (t) => {

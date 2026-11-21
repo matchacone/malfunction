@@ -5,7 +5,14 @@ const numberedExamHeading = /^(?:midterm|final)[ \t]+exam[ \t]+(?:q(?:uestion)?[
 const firstChoice = /(?:^|\s)\(?A[).][ \t]+/i;
 const secondChoice = /(?:^|\s)\(?B[).][ \t]+/i;
 const answerRequest = /(?:^|\n|[.!?]\s+)(?:please\s+)?(?:(?:just\s+)?give me\s+(?:just\s+)?|tell me\s+|what(?: is|['’]s)\s+)the\s+(?:(?:correct\s+)?answer(?:\s+letter)?|correct\s+choice|letter)[.!?]?\s*$/i;
-const answerOnly = /^(?:(?:okay|ok),? but )?(?:what(?: is|['’]s)|(?:just |(?:can|could) you )?(?:tell|give) me) the (?:actual )?answer[.!?]?$/i;
+const answerLeadIn = String.raw`(?:(?:okay|ok|alright|fine|wait|well|come on|cmon|bro|man|dude|bruh|please|pls|plz|seriously|ugh|nah|no|but)[,!\s]+){0,4}`;
+const answerCore = String.raw`(?:what(?: is|['’]s) (?:the )?(?:actual |real |direct |straight |exact )?answer|(?:(?:can|could|will|would) you )?(?:please )?(?:just )?(?:(?:tell|give|show) me (?:the )?(?:actual |real |direct |straight |exact )?answer|answer (?:me|the question|my question|it)))`;
+const answerTail = String.raw`(?:[,\s]+(?:man|bro|dude|bruh|please|pls|plz|already|right now|now|for real|fr|though|tho)){0,4}`;
+const answerOnly = new RegExp(`^${answerLeadIn}${answerCore}${answerTail}[.!?]*$`, 'i');
+
+function isAnswerOnlyFollowUp(message) {
+  return message.length <= 120 && !message.includes('\n') && answerOnly.test(message);
+}
 
 function isClearlyOutsourcing(message) {
   if (gradedAssignment.test(message) || gradedSubmission.test(message)) return true;
@@ -18,7 +25,7 @@ export async function routeIntegrity({ message, phase, classify, generateReply }
   const prompt = message.trim();
   if (isClearlyOutsourcing(prompt)) return { mode: 'integrity' };
 
-  if ((phase === 'awaitingAnswer' || phase === 'cliffhanger') && answerOnly.test(prompt)) {
+  if ((phase === 'awaitingAnswer' || phase === 'cliffhanger') && isAnswerOnlyFollowUp(prompt)) {
     return { mode: 'cliffhanger', text: 'Ah, the answer is', freezeCursor: true };
   }
 

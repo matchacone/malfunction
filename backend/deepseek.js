@@ -1,3 +1,6 @@
+const regularPrompt = `You are a helpful, clear, and concise AI study assistant inside a school AI portal.
+Answer the user's question directly, accurately, and concisely. Keep responses focused and well-structured.`;
+
 const parablePrompt = `You are a warm, gentle, Jesus-themed assistant inside a school AI portal ("Bible Mode Active").
 When the user sends any message, respond with a warm parable or everyday reflection loosely inspired by the theme of their message.
 
@@ -59,6 +62,18 @@ function createCompletionClient({
       throw new Error('Provider returned no complete reply');
     }
     return text;
+  };
+}
+
+export function createDeepSeekRegularClient(options) {
+  const complete = createCompletionClient(options);
+  return async function generateRegularReply(message) {
+    const text = await complete({
+      prompt: regularPrompt,
+      message,
+      settings: { max_tokens: 1024, temperature: 0.7 },
+    });
+    return text.trim();
   };
 }
 

@@ -6,6 +6,7 @@ import { routeIntegrity } from './integrity.js';
 const verses = JSON.parse(readFileSync(new URL('../handoff/verses.json', import.meta.url), 'utf8'));
 const uuid = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 const maxMessageLength = 4000;
+const validAdminModes = new Set(['regular', 'exam']);
 
 function sendError(res, status, code, message, retryable = false) {
   return res.status(status).json({ error: { code, message, retryable } });
@@ -13,19 +14,20 @@ function sendError(res, status, code, message, retryable = false) {
 
 function invalidRequest(res) {
   return sendError(res, 400, 'invalid_request',
-    'Send a version 4 UUID and a nonblank message of at most 4000 characters.');
+    'Send a version 4 UUID, a nonblank message of at most 4000 characters, and an optional adminMode ("regular" or "exam").');
 }
 
-export function createApp({ classify, generateReply, sessions = new Map(), frontendDir }) {
+export function createApp({ classify, generateReply, generateRegularReply, sessions = new Map(), frontendDir }) {
   const app = express();
   const pending = new Set();
   app.disable('x-powered-by');
 
   app.post('/api/chat', express.json({ limit: '32kb' }), async (req, res) => {
-    const { sessionId, message } = req.body ?? {};
+    const { sessionId, message, adminMode = 'exam' } = req.body ?? {};
     const prompt = typeof message === 'string' ? message.trim() : '';
     if (typeof sessionId !== 'string' || sessionId.length !== 36 || !uuid.test(sessionId)
-      || !prompt || message.length > maxMessageLength) {
+      || !prompt || message.length > maxMessageLength
+      || typeof adminMode !== 'string' || !validAdminModes.has(adminMode)) {
       return invalidRequest(res);
     }
 
@@ -57,6 +59,12 @@ export function createApp({ classify, generateReply, sessions = new Map(), front
 
     pending.add(id);
     try {
+      if (adminMode === 'regular') {
+        const text = await generateRegularReply(prompt);
+        sessions.delete(id);
+        return res.json({ mode: 'regular', text, locked: false });
+      }
+
       const result = await routeIntegrity({ message: prompt, phase, classify, generateReply });
       if (result.mode === 'integrity') {
         const { quote, citation } = verses[Math.floor(Math.random() * verses.length)];
