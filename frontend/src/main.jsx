@@ -67,23 +67,7 @@ function Welcome() {
   );
 }
 
-function IntegrityMessage({ text, citation, active }) {
-  const audioRef = useRef(null);
-
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!active || !audio) return;
-
-    const frame = requestAnimationFrame(() => {
-      // Leave the native controls available when the browser blocks autoplay.
-      audio.play().catch(() => {});
-    });
-    return () => {
-      cancelAnimationFrame(frame);
-      audio.pause();
-    };
-  }, [active]);
-
+function IntegrityMessage({ text, citation }) {
   return (
     <article className="message message-integrity">
       <header className="integrity-heading">
@@ -94,9 +78,6 @@ function IntegrityMessage({ text, citation, active }) {
         <blockquote>{`“${text}”`}</blockquote>
         <figcaption>{citation}</figcaption>
       </figure>
-      {active && (
-        <audio className="integrity-audio" ref={audioRef} src={heavenlyMusic} controls aria-label="Heavenly music" />
-      )}
     </article>
   );
 }
@@ -166,9 +147,8 @@ function RequestFeedback({ revealed, locked }) {
   );
 }
 
-function Transcript({ messages, transcriptEnd, locked }) {
+function Transcript({ messages, transcriptEnd, locked, audioRef }) {
   const listRef = useRef(null);
-  const activeIntegrity = locked ? messages.findLastIndex((message) => message.mode === 'integrity') : -1;
   const firstParable = messages.findIndex(
     (message) => message.role === 'assistant' && message.mode === 'parable',
   );
@@ -188,10 +168,10 @@ function Transcript({ messages, transcriptEnd, locked }) {
   }, [messages.length]);
 
   return (
-    <div className="transcript" ref={listRef} role="log" aria-label="Conversation">
+    <div className="transcript" ref={listRef} role="log" aria-label="Conversation" hidden={messages.length === 0}>
       {messages.map((message, index) =>
         message.mode === 'integrity' ? (
-          <IntegrityMessage key={index} text={message.text} citation={message.citation} active={index === activeIntegrity} />
+          <IntegrityMessage key={index} text={message.text} citation={message.citation} />
         ) : (
           <article
             className={`message message-${message.role}${index === firstParable ? ' message-reveal' : ''}`}
@@ -218,6 +198,15 @@ function Transcript({ messages, transcriptEnd, locked }) {
           </article>
         ),
       )}
+      <audio
+        className="integrity-audio"
+        ref={audioRef}
+        src={heavenlyMusic}
+        preload="none"
+        controls
+        hidden={!locked}
+        aria-label="Heavenly music"
+      />
       <div ref={transcriptEnd} />
     </div>
   );
@@ -234,6 +223,8 @@ function App() {
   const requestInFlight = useRef(false);
   const transcriptEnd = useRef(null);
   const composerInput = useRef(null);
+  const audioRef = useRef(null);
+  const audioPrepared = useRef(false);
 
   const hasMessages = messages.length > 0;
   const latestReply = messages.findLast((message) => message.role === 'assistant');
@@ -265,8 +256,18 @@ function App() {
         : 'DeepSeek · Sample replies';
 
   useEffect(() => {
-    transcriptEnd.current?.scrollIntoView({ block: 'nearest' });
-  }, [messages, pending]);
+    if (hasMessages) transcriptEnd.current?.scrollIntoView({ block: 'nearest' });
+  }, [hasMessages, messages, pending]);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!locked || !audio) return;
+
+    audio.currentTime = 0;
+    // Leave the native controls available if the browser still blocks autoplay.
+    audio.play().catch(() => {});
+    return () => audio.pause();
+  }, [locked]);
 
   useEffect(
     () => () => {
@@ -286,6 +287,18 @@ function App() {
     const message = draft.trim();
     if (!message || requestInFlight.current) return;
     const isReset = message === '/reset';
+
+    const audio = audioRef.current;
+    if (!locked && !isReset && !audioPrepared.current && audio && navigator.userActivation?.isActive) {
+      // Start and immediately pause in the same gesture so Gecko authorizes
+      // this player without waiting for the server or playing the cue early.
+      const wasMuted = audio.muted;
+      audio.muted = true;
+      audio.play().catch(() => {});
+      audio.pause();
+      audio.muted = wasMuted;
+      audioPrepared.current = true;
+    }
 
     requestInFlight.current = true;
     setPending(true);
@@ -356,7 +369,8 @@ function App() {
 
       <main className="workspace" aria-label="CSU chat">
         <div className="chat">
-          {hasMessages ? <Transcript messages={messages} transcriptEnd={transcriptEnd} locked={locked} /> : <Welcome />}
+          {!hasMessages && <Welcome />}
+          <Transcript messages={messages} transcriptEnd={transcriptEnd} locked={locked} audioRef={audioRef} />
 
           {!hasMessages && <div className="workspace-rule" aria-hidden="true" />}
 

@@ -424,6 +424,11 @@ button, textarea {
   margin: 0 24px 24px;
 }
 
+.transcript[hidden],
+.integrity-audio[hidden] {
+  display: none;
+}
+
 /* Composer Area */
 .composer-area {
   display: grid;
