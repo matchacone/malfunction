@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import * as THREE from 'three';
 import gsap from 'gsap';
 import { animate, stagger } from 'animejs';
@@ -338,6 +338,7 @@ export default function OphanimAscii({
   const frameRef = useRef(null);
   const eyeHostRef = useRef(null);
   const wingRefs = useRef({});
+  const redrawEyeRef = useRef(null);
 
   // Live reactive refs read inside the Three.js RAF loop without recreating WebGL context
   const stateRef = useRef({
@@ -351,13 +352,17 @@ export default function OphanimAscii({
     hasPointer: false,
   });
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     stateRef.current.revealed = revealed;
     stateRef.current.locked = locked;
     stateRef.current.enraged = enraged;
+    redrawEyeRef.current?.();
+  }, [revealed, locked, enraged]);
+
+  useEffect(() => {
     stateRef.current.isTyping = isTyping;
     stateRef.current.draftLength = draftLength;
-  }, [revealed, locked, enraged, isTyping, draftLength]);
+  }, [isTyping, draftLength]);
 
   // 1. GSAP: Ethereal floating levitation + independent 6-wing 3D flapping choreography
   useEffect(() => {
@@ -540,8 +545,6 @@ export default function OphanimAscii({
     };
 
     updateSize();
-    const resizeObserver = new ResizeObserver(updateSize);
-    resizeObserver.observe(host);
 
     // Smooth GSAP quickTo for subtle 3D perspective wing tilt toward gaze
     const tiltXTo = frameRef.current && !reducedMotion
@@ -565,8 +568,7 @@ export default function OphanimAscii({
     let blinkProgress = -1;
     const BLINK_DURATION = 0.22;
 
-    const renderFrame = () => {
-      const dt = Math.min(clock.getDelta(), 0.05);
+    const drawEye = (dt) => {
       uniforms.uTime.value = reducedMotion ? 0 : clock.elapsedTime;
 
       if (!reducedMotion) {
@@ -628,9 +630,9 @@ export default function OphanimAscii({
 
       const lerpRate = Math.min(1, dt * (gazeTargetRef?.current?.active ? 10 : s.isTyping ? 6.5 : 4.2));
       uniforms.uGaze.value.lerp(targetGaze, reducedMotion ? 1 : lerpRate);
-      uniforms.uLocked.value += ((s.locked ? 1 : 0) - uniforms.uLocked.value) * Math.min(1, dt * 4);
-      uniforms.uEnraged.value += ((s.enraged ? 1 : 0) - uniforms.uEnraged.value) * Math.min(1, dt * 5);
-      uniforms.uRevealed.value += ((s.revealed ? 1 : 0) - uniforms.uRevealed.value) * Math.min(1, dt * 4);
+      uniforms.uLocked.value = s.locked ? 1 : 0;
+      uniforms.uEnraged.value += ((s.enraged ? 1 : 0) - uniforms.uEnraged.value) * (reducedMotion ? 1 : Math.min(1, dt * 5));
+      uniforms.uRevealed.value += ((s.revealed ? 1 : 0) - uniforms.uRevealed.value) * (reducedMotion ? 1 : Math.min(1, dt * 4));
       uniforms.uTyping.value += ((s.isTyping ? 1 : 0) - uniforms.uTyping.value) * Math.min(1, dt * 5);
 
       if (tiltXTo && tiltYTo) {
@@ -639,14 +641,25 @@ export default function OphanimAscii({
       }
 
       renderer.render(scene, camera);
-      if (!reducedMotion) {
-        rafId = requestAnimationFrame(renderFrame);
-      }
     };
 
-    rafId = requestAnimationFrame(renderFrame);
+    const renderFrame = () => {
+      drawEye(Math.min(clock.getDelta(), 0.05));
+      rafId = requestAnimationFrame(renderFrame);
+    };
+
+    const redraw = () => drawEye(0);
+    redrawEyeRef.current = redraw;
+    const resizeObserver = new ResizeObserver(() => {
+      updateSize();
+      if (reducedMotion) redraw();
+    });
+    resizeObserver.observe(host);
+    redraw();
+    if (!reducedMotion) rafId = requestAnimationFrame(renderFrame);
 
     return () => {
+      redrawEyeRef.current = null;
       cancelAnimationFrame(rafId);
       resizeObserver.disconnect();
       window.removeEventListener('pointermove', onPointerMove);

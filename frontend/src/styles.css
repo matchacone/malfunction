@@ -242,9 +242,8 @@ button, textarea {
 }
 
 /* Main Split Workspace */
-.workspace {
-  position: relative;
-  z-index: 2;
+.workspace,
+.workspace-observer {
   display: grid;
   grid-template-columns: minmax(0, 610px) minmax(380px, 700px);
   align-items: start;
@@ -252,7 +251,24 @@ button, textarea {
   gap: clamp(28px, 3.8vw, 60px);
   width: min(100% - 40px, 1384px);
   margin-inline: auto;
+}
+
+.workspace {
+  position: relative;
+  z-index: 2;
   padding: 52px 0 92px;
+}
+
+.workspace-observer {
+  position: fixed;
+  inset: 111px 0 auto;
+  pointer-events: none;
+}
+
+.workspace-observer > .ophanim-stage {
+  grid-column: 2;
+  position: relative;
+  top: auto;
 }
 
 .chat {
@@ -985,9 +1001,12 @@ button, textarea {
     gap: 40px;
   }
 
-  .ophanim-stage {
-    position: relative;
-    top: 0;
+  .workspace-observer {
+    display: contents;
+  }
+
+  .workspace-observer > .ophanim-stage {
+    grid-column: auto;
   }
 
   .ophanim-art {
@@ -1499,7 +1518,8 @@ button, textarea {
   z-index: 120;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  align-items: safe center;
+  overflow: auto;
   background: #050000;
   padding: 20px;
   user-select: none;
@@ -1569,20 +1589,21 @@ button, textarea {
 }
 
 .ophanim-variant-takeover {
+  --caught-art-size: min(clamp(4px, 0.92vw, 11px), max(3px, calc((100dvh - 280px) / 72)));
   position: relative;
   top: 0;
   gap: 14px;
 }
 
 .ophanim-variant-takeover .ophanim-art {
-  font-size: clamp(5.2px, 0.92vw, 11px);
+  font-size: var(--caught-art-size);
   color: #ff3e34;
   text-shadow: 0 0 16px rgba(255, 45, 36, 0.75);
 }
 
 .ophanim-variant-takeover .ophanim-eye-host {
-  width: clamp(150px, 22vw, 280px);
-  height: clamp(150px, 22vw, 280px);
+  width: min(280px, calc(var(--caught-art-size) * 25));
+  height: min(280px, calc(var(--caught-art-size) * 25));
 }
 
 .caught-footer {
@@ -1599,6 +1620,25 @@ button, textarea {
   letter-spacing: 0.04em;
   color: var(--crimson);
   text-shadow: 0 0 20px rgba(255, 45, 36, 0.65);
+}
+
+.caught-verse {
+  display: grid;
+  gap: 5px;
+  max-width: 54ch;
+  color: var(--ink);
+  font-size: clamp(17px, 2vw, 22px);
+  line-height: 1.35;
+}
+
+.caught-verse blockquote {
+  font-style: italic;
+}
+
+.caught-verse figcaption {
+  color: var(--amber);
+  font-family: var(--font-mono);
+  font-size: 11px;
 }
 
 .caught-lock-status {

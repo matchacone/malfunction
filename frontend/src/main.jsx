@@ -178,7 +178,7 @@ function Transcript({ messages, transcriptEnd, locked, audioRef }) {
     if (!list || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     const items = list.querySelectorAll(':scope > article');
     const latest = items[items.length - 1];
-    if (!latest) return;
+    if (!latest || latest.classList.contains('message-integrity')) return;
 
     gsap.fromTo(
       latest,
@@ -308,10 +308,14 @@ function App() {
     const audio = audioRef.current;
     if (stage !== 'portal' || !locked || !audio) return;
 
+    const stopCue = () => audio.pause();
     audio.currentTime = 0;
-    // Leave the native controls available if the browser still blocks autoplay.
     audio.play().catch(() => {});
-    return () => audio.pause();
+    window.addEventListener('pagehide', stopCue);
+    return () => {
+      window.removeEventListener('pagehide', stopCue);
+      stopCue();
+    };
   }, [locked, stage]);
 
   useEffect(
@@ -334,6 +338,8 @@ function App() {
     const isReset = message === '/reset';
 
     const audio = audioRef.current;
+    if (isReset) audio?.pause();
+
     if (!locked && !isReset && !audioPrepared.current && audio && navigator.userActivation?.isActive) {
       // Start and immediately pause in the same gesture so Gecko authorizes
       // this player without waiting for the server or playing the cue early.
@@ -410,7 +416,8 @@ function App() {
   }
 
   if (stage === 'caught') {
-    return <CaughtTakeover />;
+    const verse = messages.findLast((message) => message.mode === 'integrity');
+    return <CaughtTakeover verse={verse} />;
   }
 
   return (
@@ -543,14 +550,16 @@ function App() {
           </div>
         </div>
 
-        <OphanimAscii
-          revealed={adminMode === 'exam' && revealed}
-          locked={locked}
-          pending={pending}
-          inputRef={composerInput}
-          isTyping={isTyping}
-          draftLength={draft.length}
-        />
+        <div className="workspace-observer">
+          <OphanimAscii
+            revealed={adminMode === 'exam' && revealed}
+            locked={locked}
+            pending={pending}
+            inputRef={composerInput}
+            isTyping={isTyping}
+            draftLength={draft.length}
+          />
+        </div>
       </main>
 
       <footer className="dot-menu" aria-label="Gateway status">

@@ -4,13 +4,20 @@ import OphanimAscii from './OphanimAscii.jsx';
 import { ALARM_AUDIO_SRC, startCheatingAlarm, stopCheatingAlarm } from './alarmAudio.js';
 import { engageTakeoverLockout, isFullscreenActive } from './lockout.js';
 
-export default function CaughtTakeover() {
+export default function CaughtTakeover({ verse }) {
   const [fullscreen, setFullscreen] = useState(() => isFullscreenActive());
 
   useEffect(() => {
+    let wasFullscreen = isFullscreenActive();
     startCheatingAlarm();
-    const releaseLockout = engageTakeoverLockout(setFullscreen);
+    const releaseLockout = engageTakeoverLockout((active) => {
+      if (wasFullscreen && !active) stopCheatingAlarm();
+      wasFullscreen = active;
+      setFullscreen(active);
+    });
+    window.addEventListener('pagehide', stopCheatingAlarm);
     return () => {
+      window.removeEventListener('pagehide', stopCheatingAlarm);
       releaseLockout();
       stopCheatingAlarm();
     };
@@ -48,6 +55,12 @@ export default function CaughtTakeover() {
           <p className="caught-headline" data-text="CHEATING DETECTED — TEACHERS ALERTED">
             CHEATING DETECTED — TEACHERS ALERTED
           </p>
+          {verse && (
+            <figure className="caught-verse">
+              <blockquote>{`“${verse.text}”`}</blockquote>
+              <figcaption>{verse.citation}</figcaption>
+            </figure>
+          )}
           <p className="caught-lock-status">
             {fullscreen
               ? 'TERMINAL LOCKED · FULLSCREEN ENFORCED · NO ESCAPE'
