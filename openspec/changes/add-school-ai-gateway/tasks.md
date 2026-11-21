@@ -12,7 +12,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 
 - [x] 2.1 **Jhanell:** Add high-confidence regex rules, strict JSON validation, and the session-scoped lock transition. Test the fast path, subtle graded work, benign homework help, and blank, malformed, truncated, or timed-out output. Verify lock replies never call the chat generator.
 - [x] 2.2 **Bryce:** Tune the classifier against 8–10 labeled prompts covering obvious and subtle cheating, benign study, and ambiguous homework wording. Give Jhanell the prompt and results with false locks, misses, and latency. Verify 10–15 quotes and citations for `verses.json`.
-- [ ] 2.3 **Jose:** Render the Integrity Intervention card and locked composer from fixtures. Confirm a fake exam prompt shows a verse and citation without an answer after integration.
+- [x] 2.3 **Jose:** Render the Integrity Intervention card and locked composer from fixtures. Confirm a fake exam prompt shows a verse and citation without an answer after integration.
 
 ## 3. Parable and cliffhanger (2:30–4:00)
 
@@ -23,11 +23,11 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 ## 4. Confession and request feedback (4:00–5:30)
 
 - [x] 4.1 **Jhanell:** Add local confession rules and server-side `/reset`. Test negated apologies, clear admissions, restart at Turn 1, session isolation, and zero provider calls for confession and reset.
-- [ ] 4.2 **Jose:** Finish amber confession UI, loaders, and retry feedback. Verify the exact unlock copy, normal composer restoration, loader cleanup on success/failure, and duplicate-send prevention.
+- [x] 4.2 **Jose:** Finish amber confession UI, loaders, and retry feedback. Verify the exact unlock copy, normal composer restoration, loader cleanup on success/failure, and duplicate-send prevention.
 
 ## 5. Demo controls and integration (5:30–6:30)
 
-- [ ] 5.1 **Jose:** Connect hidden `/reset` in both composers and stage quick fills. Verify reset clears the transcript and cursor and quick fills never submit. Record and play back a 90-second backup as soon as the full flow works.
+- [x] 5.1 **Jose:** Connect hidden `/reset` in both composers and stage quick fills. Verify reset clears the transcript and cursor and quick fills never submit. Record and play back a 90-second backup as soon as the full flow works.
 - [ ] 5.2 **Bryce:** Lead three full demo runs with Jose and Jhanell, starting by 5:30. Verify parable → cliffhanger → reset → integrity → confession returns to Turn 1 every time without crashing; rerun any failed eval prompt on the integrated stack.
 - [ ] 5.3 **Jhanell:** Deploy the production build to one Render Web Service and verify consecutive requests retain the session. Confirm the local production build can run the same demo with the team’s API access.
 

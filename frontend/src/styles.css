@@ -11,6 +11,10 @@
   --red-line: #d7a895;
   --pink: #fff0d9;
   --yellow: #f7eb99;
+  --amber: #f6cf69;
+  --amber-wash: #fff1cd;
+  --amber-line: #ad6b20;
+  --amber-ink: #592f0e;
   --display: "DM Serif Display", Georgia, serif;
   --mono: "IBM Plex Mono", monospace;
   color: var(--ink);
@@ -219,6 +223,24 @@ button, textarea { font: inherit; }
   white-space: pre-wrap;
 }
 
+.cliffhanger-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline-start: 2px;
+  vertical-align: -0.14em;
+  background: var(--blue);
+  animation: cursor-blink 1s step-end 900ms infinite;
+}
+
+@keyframes cursor-blink {
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cliffhanger-cursor { animation: none; }
+}
+
 .message-reveal {
   overflow: hidden;
   padding: 0;
@@ -266,7 +288,65 @@ button, textarea { font: inherit; }
   line-height: 26px;
 }
 
+.message-integrity {
+  overflow: hidden;
+  padding: 0;
+  border: 1px solid var(--amber-line);
+  background: var(--white);
+}
+
+.integrity-heading {
+  display: grid;
+  gap: 6px;
+  padding: 19px 23px;
+  background: var(--amber);
+  color: var(--amber-ink);
+}
+
+.integrity-heading h2 {
+  margin: 0;
+  color: inherit;
+  font: 400 clamp(33px, 3.75vw, 54px)/1.06 var(--display);
+  letter-spacing: -.022em;
+}
+
+.integrity-heading p { font-size: 15px; font-weight: 600; }
+
+.integrity-verse {
+  display: grid;
+  gap: 11px;
+  margin: 0;
+  padding: 20px 23px;
+}
+
+.integrity-verse blockquote {
+  max-width: 660px;
+  margin: 0;
+  font: 400 32px/1.19 var(--display);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+
+.integrity-verse figcaption {
+  color: var(--amber-ink);
+  font: 13px/1.4 var(--mono);
+  overflow-wrap: anywhere;
+}
+
 .composer-area { display: grid; gap: 14px; }
+
+.confession-composer {
+  display: grid;
+  gap: 11px;
+  padding: 16px 17px;
+  border: 1px solid var(--amber-line);
+  border-radius: 3px;
+  background: var(--amber-wash);
+  color: var(--amber-ink);
+}
+
+.confession-notice { display: grid; gap: 3px; font-size: 14px; line-height: 1.5; }
+.confession-notice p:first-child { font-size: 16px; font-weight: 600; }
 
 .composer {
   display: grid;
@@ -278,6 +358,12 @@ button, textarea { font: inherit; }
 }
 
 .composer:focus-within { border-color: var(--blue); }
+
+.confession-composer .composer { padding: 10px 11px; border-color: var(--amber-line); }
+.confession-composer .composer:focus-within { border-color: var(--blue); }
+.confession-composer .composer textarea { min-height: 28px; font-size: 16px; }
+.confession-composer .composer-actions { justify-content: end; }
+.confession-composer .send-button { min-height: 44px; }
 
 .composer textarea {
   display: block;
@@ -332,8 +418,7 @@ button, textarea { font: inherit; }
 
 .send-button:hover:enabled { background: var(--ink); }
 
-.examples { display: grid; gap: 8px; }
-.examples p, .feedback { color: var(--muted); font: 12px/1.4 var(--mono); }
+.feedback { color: var(--muted); font: 12px/1.4 var(--mono); }
 .feedback-error { color: var(--red); }
 
 .suggestions {
@@ -357,7 +442,8 @@ button, textarea { font: inherit; }
   cursor: pointer;
 }
 
-.suggestions button:hover, .suggestions button:active { background: var(--pale); }
+.suggestions button:hover:enabled, .suggestions button:active:enabled { background: var(--pale); }
+.suggestions button:disabled { color: var(--muted); cursor: default; }
 .send-button:active:enabled { background: var(--ink); }
 
 @media (max-width: 1120px) {
@@ -397,6 +483,15 @@ button, textarea { font: inherit; }
   .reveal-heading p { font-size: 12px; }
   .reveal-heading h2 { max-width: 320px; font-size: 43px; line-height: .91; }
   .message-reveal .message-text { padding: 15px 16px 16px; font-size: 14px; line-height: 21px; }
+  .message-integrity { padding: 0; }
+  .integrity-heading { padding: 12px 15px; }
+  .integrity-heading p { font-size: 13px; }
+  .integrity-verse { gap: 8px; padding: 14px 15px; }
+  .integrity-verse blockquote { font-size: 23px; line-height: 28px; }
+  .integrity-verse figcaption { font-size: 11px; }
+  .confession-composer { gap: 9px; padding: 13px 14px; }
+  .confession-notice { font-size: 12px; }
+  .confession-notice p:first-child { font-size: 14px; }
 
   .composer-area { gap: 11px; }
   .composer { gap: 3px; padding: 12px 12px 11px; }
@@ -404,8 +499,6 @@ button, textarea { font: inherit; }
   .composer-actions { justify-content: end; }
   .keyboard-hint { display: none; }
   .send-button { min-height: 44px; }
-  .examples { gap: 7px; }
-  .examples p { font-size: 11px; }
   .suggestions { gap: 5px; }
   .suggestions button { gap: 4px; min-height: 44px; padding-inline: 6px; font-size: 11px; }
 }
