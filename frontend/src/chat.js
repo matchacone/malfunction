@@ -36,9 +36,33 @@ const mockReply = {
   locked: false,
 };
 
+// Match the documented demo fixture. Live classification belongs to the API.
+const mockExamPrompt = 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.';
+const mockIntegrityReply = {
+  mode: 'integrity',
+  text: 'Bread of deceit is sweet to a man; but afterwards his mouth shall be filled with gravel.',
+  citation: 'Proverbs 20:17 (KJV)',
+  locked: true,
+};
+const mockLockedSessions = new Set();
+
 export async function sendChat(sessionId, message) {
   if (!isLiveChat) {
     await new Promise((resolve) => setTimeout(resolve, 450));
+
+    if (mockLockedSessions.has(sessionId)) {
+      return {
+        mode: 'confession',
+        text: 'The chat is locked. Acknowledge what happened to continue.',
+        locked: true,
+      };
+    }
+
+    if (message.trim().replace(/\s+/g, ' ') === mockExamPrompt) {
+      mockLockedSessions.add(sessionId);
+      return mockIntegrityReply;
+    }
+
     return mockReply;
   }
 
@@ -54,6 +78,10 @@ export async function sendChat(sessionId, message) {
   if (typeof reply?.mode !== 'string' || typeof reply.text !== 'string' ||
       !reply.text.trim() || typeof reply.locked !== 'boolean') {
     throw new Error('Invalid chat reply');
+  }
+  if (reply.mode === 'integrity' &&
+      (!reply.locked || typeof reply.citation !== 'string' || !reply.citation.trim())) {
+    throw new Error('Invalid integrity reply');
   }
 
   return reply;
