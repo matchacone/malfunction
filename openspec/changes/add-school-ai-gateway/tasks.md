@@ -23,11 +23,11 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 ## 4. Confession and request feedback (4:00–5:30)
 
 - [ ] 4.1 **Jhanell:** Add local confession rules and server-side `/reset`. Test negated apologies, clear admissions, restart at Turn 1, session isolation, and zero provider calls for confession and reset.
-- [ ] 4.2 **Jose:** Finish amber confession UI, loaders, and retry feedback. Verify the exact unlock copy, normal composer restoration, loader cleanup on success/failure, and duplicate-send prevention.
+- [x] 4.2 **Jose:** Finish amber confession UI, loaders, and retry feedback. Verify the exact unlock copy, normal composer restoration, loader cleanup on success/failure, and duplicate-send prevention.
 
 ## 5. Demo controls and integration (5:30–6:30)
 
-- [ ] 5.1 **Jose:** Connect hidden `/reset` in both composers and stage quick fills. Verify reset clears the transcript and cursor and quick fills never submit. Record and play back a 90-second backup as soon as the full flow works.
+- [x] 5.1 **Jose:** Connect hidden `/reset` in both composers and stage quick fills. Verify reset clears the transcript and cursor and quick fills never submit. Record and play back a 90-second backup as soon as the full flow works.
 - [ ] 5.2 **Bryce:** Lead three full demo runs with Jose and Jhanell, starting by 5:30. Verify parable → cliffhanger → reset → integrity → confession returns to Turn 1 every time without crashing; rerun any failed eval prompt on the integrated stack.
 - [ ] 5.3 **Jhanell:** Deploy the production build to one Render Web Service and verify consecutive requests retain the session. Confirm the local production build can run the same demo with the team’s API access.
 
