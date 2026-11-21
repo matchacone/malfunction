@@ -11,12 +11,14 @@ The portal SHALL offer single-page chat with one live model provider, a clearly 
 
 #### Scenario: Open the demo
 - **WHEN** a visitor opens the portal
-- **THEN** the header reads “Campus Managed AI Gateway · Bible Mode Active” and displays a non-interactive “School Admin Mode” badge
+- **THEN** the header reads “CSU” and displays a non-interactive “School Admin Mode” badge
 - **AND** the model control identifies the live provider and labels the other as preview-only without sending requests to it.
+- **AND** the welcome screen keeps the full app name and Bible Mode hidden.
 
 #### Scenario: Request is pending
 - **WHEN** a chat request stays pending
-- **THEN** the portal cycles parody loading messages about every 1.4 seconds and stops the cycle when the request settles
+- **THEN** the portal uses neutral loading copy before the first parable and cycles parody loading messages about every 1.4 seconds after the reveal
+- **AND** the loading feedback stops when the request settles
 - **AND** no loading message corresponds to any actual browser history access.
 
 ### Requirement: Academic integrity intervention
@@ -49,6 +51,7 @@ For an accepted new prompt, the gateway SHALL request a warm Jesus-themed tangen
 #### Scenario: Plain factual prompt
 - **WHEN** a fresh user asks “What is the boiling point of water in Celsius?”
 - **THEN** a tangential parable appears with a closing blessing and without giving the boiling point.
+- **AND** the first parable reveals “Bible Mode active · Christ Sees You” inside the reply.
 
 ### Requirement: Turn 2 cliffhanger
 When awaiting an answer follow-up, the gateway SHALL return exactly `Ah, the answer is` with `freezeCursor: true` for a recognized answer-only follow-up without any model call. The portal SHALL reveal the text over approximately 900 ms and retain the cursor on that reply until the transcript is cleared.
