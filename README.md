@@ -59,15 +59,39 @@ Start Express using the [backend quickstart](backend/README.md). It listens on `
 VITE_CHAT_MODE=live CHAT_API_TARGET=http://127.0.0.1:3001 npm --prefix frontend run dev
 ```
 
-Live mode supports parables, the cliffhanger, and integrity lock. Confession recovery and `/reset` are available in mock mode while backend task 4.1 is pending.
+Live mode supports the full demo, including confession recovery and `/reset`.
 
 ### Production Build
 
-Build the frontend in live mode. The deployment plan serves `frontend/dist` alongside `/api/chat`.
+From the repo root, install both packages, build the frontend in live mode,
+and start Express with `DEEPSEEK_API_KEY` set in `backend/.env` or the server
+environment:
 
 ```sh
+npm --prefix backend ci --omit=dev
+npm --prefix frontend ci --include=dev
 VITE_CHAT_MODE=live npm --prefix frontend run build
+npm --prefix backend start
 ```
+
+Open `http://127.0.0.1:3001`; no Vite dev server is needed. From a separate
+terminal, run `node scripts/smoke-production.mjs` to check the built page and
+run the chat sequence against the configured provider.
+
+### Deploy to Render
+
+1. Push the deployment changes to the Git branch you want to deploy. In the
+   Render Dashboard, create a **Blueprint** from that branch using
+   [`render.yaml`](render.yaml) at the repo root. It builds both packages and
+   starts one Express Web Service on Render's `PORT`.
+2. Enter `DEEPSEEK_API_KEY` in Render's environment settings, not in Git or a
+   `VITE_` variable. Keep the service on one instance: session state is held
+   in memory and disappears on restart or free-tier sleep.
+3. Once the deploy is live, run
+   `node scripts/smoke-production.mjs https://<service>.onrender.com`.
+   Open the hosted page and run the [browser rehearsal](frontend/README.md)
+   once to check the cursor and composer. The public demo has no login;
+   monitor provider quota and suspend the service when no longer needed.
 
 ## API Contract
 

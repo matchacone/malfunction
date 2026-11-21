@@ -1,0 +1,16 @@
+services:
+  - type: web
+    name: malfunction-campus-gateway
+    runtime: node
+    plan: free
+    numInstances: 1
+    healthCheckPath: /
+    buildCommand: npm --prefix backend ci --omit=dev && npm --prefix frontend ci --include=dev && VITE_CHAT_MODE=live npm --prefix frontend run build
+    startCommand: npm --prefix backend start
+    envVars:
+      - key: NODE_VERSION
+        value: ">=22.12.0 <23"
+      - key: HOST
+        value: 0.0.0.0
+      - key: DEEPSEEK_API_KEY
+        sync: false

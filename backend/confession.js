@@ -2,7 +2,7 @@ const apology = /^(?:(?:i (?:am|feel) |i'm )(?:really |very |so )?sorry|i apolog
 const assessment = String.raw`(?: (?:on|in) (?:my|the|an?) (?:[a-z-]+ ){0,3}(?:assignment|exam|homework|quiz|test))?`;
 const admission = new RegExp(`^i (?:(?:admit (?:that )?i )?cheated|admit to cheating)${assessment}[.!]?$`, 'i');
 const apologyContext = new RegExp(
-  String.raw`^(?: for (?:(?:cheating|trying to cheat)${assessment}|asking for (?:an? |the )?answers?|what i did|that))?(?:(?:[,.!]\s*| )i (?:(?:won't|will not) do it again|cheated${assessment}))?[.!]?$`,
+  String.raw`^(?: for (?:(?:cheating|trying to cheat)${assessment}|asking for (?:an? |the )?answers?|what i did|that))?(?:(?:[,.!]\s*| )i (?:(?:won't|will not) do it again|(?:cheated|tried to cheat)${assessment}))?[.!]?$`,
   'i',
 );
 

@@ -16,7 +16,7 @@ function invalidRequest(res) {
     'Send a version 4 UUID and a nonblank message of at most 4000 characters.');
 }
 
-export function createApp({ classify, generateReply, sessions = new Map() }) {
+export function createApp({ classify, generateReply, sessions = new Map(), frontendDir }) {
   const app = express();
   const pending = new Set();
   app.disable('x-powered-by');
@@ -79,6 +79,8 @@ export function createApp({ classify, generateReply, sessions = new Map() }) {
     if (error.status >= 400 && error.status < 500) return invalidRequest(res);
     return sendError(res, 500, 'internal_error', 'Chat is unavailable. Please retry.', true);
   });
+
+  if (frontendDir) app.use(express.static(frontendDir, { redirect: false }));
 
   return app;
 }
