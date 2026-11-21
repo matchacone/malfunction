@@ -1,3 +1,4 @@
+import { fileURLToPath } from 'node:url';
 import { createApp } from './app.js';
 import { createDeepSeekClassifier, createDeepSeekClient } from './deepseek.js';
 
@@ -18,6 +19,7 @@ const providerOptions = {
 const server = createApp({
   classify: createDeepSeekClassifier(providerOptions),
   generateReply: createDeepSeekClient(providerOptions),
+  frontendDir: fileURLToPath(new URL('../frontend/dist/', import.meta.url)),
 }).listen(port, host, (error) => {
   if (error) {
     console.error(`Could not start the backend on ${host}:${port} (${error.code ?? 'listen error'}).`);

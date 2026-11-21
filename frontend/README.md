@@ -29,8 +29,5 @@ VITE_CHAT_MODE=live CHAT_API_TARGET=http://127.0.0.1:3001 npm --prefix frontend 
 
 Set `CHAT_API_TARGET` to the backend origin if it listens elsewhere. Vite proxies `/api` to that origin. The browser posts `{ sessionId, message }` to `/api/chat` and displays the `text` from the JSON response. Provider credentials belong in the backend environment.
 
-For same-origin hosting, build in live mode and serve `frontend/dist` from Express alongside `/api/chat`:
-
-```sh
-VITE_CHAT_MODE=live npm --prefix frontend run build
-```
+For same-origin hosting, follow the [production build instructions](../README.md#production-build).
+Express serves `frontend/dist` alongside `/api/chat`.
