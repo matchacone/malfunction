@@ -7,7 +7,7 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
 import AsciiBackdrop from './AsciiBackdrop.jsx';
 import OphanimAscii from './OphanimAscii.jsx';
-import heavenlyMusic from './assets/heavenly-music.mp3';
+import bossMusic from './assets/boss-music.mp3';
 import { demoPrompts, getSessionId, isLiveChat, sendChat } from './chat.js';
 import './styles.css';
 
@@ -202,7 +202,7 @@ function Transcript({ messages, transcriptEnd, locked, audioRef }) {
       <audio
         className="integrity-audio"
         ref={audioRef}
-        src={heavenlyMusic}
+        src={bossMusic}
         preload="none"
         hidden
         aria-hidden="true"
