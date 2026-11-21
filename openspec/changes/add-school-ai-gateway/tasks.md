@@ -11,7 +11,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 ## 2. Integrity intervention (1:00–2:30)
 
 - [ ] 2.1 **Jhanell:** Add high-confidence regex rules, strict JSON validation, and the session-scoped lock transition. Test the fast path, subtle graded work, benign homework help, and blank, malformed, truncated, or timed-out output. Verify lock replies never call the chat generator.
-- [ ] 2.2 **Bryce:** Tune the classifier against 8–10 labeled prompts covering obvious and subtle cheating, benign study, and ambiguous homework wording. Give Jhanell the prompt and results with false locks, misses, and latency. Verify 10–15 quotes and citations for `verses.json`.
+- [x] 2.2 **Bryce:** Tune the classifier against 8–10 labeled prompts covering obvious and subtle cheating, benign study, and ambiguous homework wording. Give Jhanell the prompt and results with false locks, misses, and latency. Verify 10–15 quotes and citations for `verses.json`.
 - [ ] 2.3 **Jose:** Render the Integrity Intervention card and locked composer from fixtures. Confirm a fake exam prompt shows a verse and citation without an answer after integration.
 
 ## 3. Parable and cliffhanger (2:30–4:00)
