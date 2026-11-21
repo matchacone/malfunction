@@ -1,0 +1,51 @@
+<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="390" height="322" viewBox="0 0 390 322" fill="none" xmlns="http://www.w3.org/2000/svg">
+<g id="Orbit illustration" clip-path="url(#clip0_0_4)">
+<rect width="390" height="322" fill="#233ECA"/>
+<rect id="Grid line" x="22" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_2" x="46" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_3" x="70" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_4" x="94" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_5" x="118" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_6" x="142" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_7" x="166" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_8" x="190" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_9" x="214" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_10" x="238" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_11" x="262" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_12" x="286" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_13" x="310" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_14" x="334" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_15" x="358" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_16" x="382" width="1" height="322" fill="#5069DF"/>
+<rect id="Grid line_17" y="17" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_18" y="41" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_19" y="65" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_20" y="89" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_21" y="113" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_22" y="137" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_23" y="161" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_24" y="185" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_25" y="209" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_26" y="233" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_27" y="257" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_28" y="281" width="390" height="1" fill="#5069DF"/>
+<rect id="Grid line_29" y="305" width="390" height="1" fill="#5069DF"/>
+<rect id="Horizontal axis" y="161" width="390" height="1" fill="#BCCDFF"/>
+<rect id="Vertical axis" x="195" width="1" height="322" fill="#BCCDFF"/>
+<circle id="Orbit &#194;&#183; outer" cx="195" cy="161" r="129.5" stroke="#BCCDFF"/>
+<circle id="Orbit &#194;&#183; inner" cx="195" cy="161" r="93.5" stroke="#BCCDFF"/>
+<circle id="Orbit &#194;&#183; center" cx="195" cy="161" r="54.5" stroke="#BCCDFF"/>
+<mask id="stroke0_0_4" fill="white">
+<path d="M297.067 254.147C287.137 278.726 222.215 275.675 152.062 247.331C81.9084 218.987 33.0882 176.084 43.0189 151.505C52.9496 126.925 117.871 129.977 188.024 158.321C258.178 186.665 306.998 229.568 297.067 254.147Z"/>
+</mask>
+<path id="Inclined orbit" d="M297.067 254.147C287.137 278.726 222.215 275.675 152.062 247.331C81.9084 218.987 33.0882 176.084 43.0189 151.505C52.9496 126.925 117.871 129.977 188.024 158.321C258.178 186.665 306.998 229.568 297.067 254.147Z" stroke-width="2" stroke="#F7EB99" mask="url(#stroke0_0_4)"/>
+<circle id="Marker &#194;&#183; northeast" cx="271" cy="90" r="8" fill="#F7EB99"/>
+<circle id="Marker &#194;&#183; southwest" cx="114" cy="230" r="5" fill="#F7EB99"/>
+<circle id="Center marker" cx="195" cy="161" r="14" fill="#F7EB99"/>
+</g>
+<defs>
+<clipPath id="clip0_0_4">
+<rect width="390" height="322" fill="white"/>
+</clipPath>
+</defs>
+</svg>
