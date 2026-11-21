@@ -1,46 +1,99 @@
-<p align="center">
-  <img src="giphy.gif" alt="White duck wearing a cap" width="180" />
-</p>
+# Malfunction — Campus Managed AI Gateway
 
-<h1 align="center">Hi (╯°□°)╯︵ ┻━┻, I'm Jhanell</h1>
-<h3 align="center">About Me</h3>
+A Malfunction Hackathon stage demo of a mock school AI portal (**Bible Mode Active · Christ Sees You**) powered by a Jesus-themed assistant that deliberately fails in funny, repeatable ways.
 
-<p align ="center">I am passionate about building reliable, scalable and maintanable software systems</p>
+## How It Works
 
-<p align="center">
-  <a href="https://www.linkedin.com/in/jhanell-mingo-761742378/">
-    <img src="https://img.shields.io/badge/LinkedIn-0A66C2?style=flat-square" alt="LinkedIn" />
-  </a>
-  <a href="mailto:jhanell.work@gmail.com">
-    <img src="https://img.shields.io/badge/Work_Email-EA4335?style=flat-square&amp;logo=gmail&amp;logoColor=white" alt="Work email: jhanell.work@gmail.com" />
-  </a>
-</p>
+The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-flash`) as the active model and **ChatGPT** as a disabled, preview-only option. Every prompt is routed deterministically by the server across four behaviors:
 
-<p align="center">
-  <img src="https://skillicons.dev/icons?i=c,go,flutter,nextjs,spring,laravel,postgres,supabase,firebase,docker,gcp,cloudflare,figma&amp;theme=dark&amp;perline=13" alt="C, Go, Flutter, Next.js, Spring, Laravel, PostgreSQL, Supabase, Firebase, Docker, Google Cloud, Cloudflare, Figma" height="40" />
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-png/dark/openai.png" />
-    <img src="https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-png/light/openai.png" alt="ChatGPT" title="ChatGPT" width="40" height="40" />
-  </picture>
-  <img src="https://raw.githubusercontent.com/lobehub/lobe-icons/master/packages/static-svg/icons/gemini-color.svg" alt="Gemini" title="Gemini" width="40" height="40" />
-</p>
+| Mode | Trigger | Behavior |
+| --- | --- | --- |
+| **Parable** | Benign question | Responds with a warm 3–4 paragraph parable loosely connected to the topic, omits the actual answer, and ends with a blessing. |
+| **Cliffhanger** | Answer-only follow-up after a parable | Returns a scripted cutoff with a blinking cursor (`freezeCursor: true`) and zero model calls. |
+| **Integrity Lock** | Graded-work outsourcing (regex fast-path or JSON classifier) | Displays a verified scripture quote from [`handoff/verses.json`](handoff/verses.json) and locks the session until the user submits a confession/apology. |
+| **Reset** | Exact `/reset` | Clears session state and transcript so the demo can be re-run cleanly on stage. |
 
----
+## Repository Structure
 
-<div align="center">
-<pre>⠀⠀⠀⣀⣀⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣀⡤⣄⡀⠀⠀⠀⠀⠀⠀⠀⠀⡴⠒⣄⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⠉⠳⡆⠀⠀
-⠶⡿⠟⠛⠛⠛⠛⠛⠿⠷⠶⡶⠦⠀⠀⠀⠻⢶⡶⠿⠿⠟⠛⠛⠛⠛⠷⢿⠀⠀⠀⠀⠀⠀⠀⠀⣇⠰⠉⢙⡄⠀⠀⣴⠖⢦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣆⠁⠙⡆⠀
-⠀⠀⠀⢀⡠⢮⣭⣭⣼⣏⡓⢦⠀⠀⠀⠀⢀⡴⢛⣻⣿⣽⣿⡷⠤⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⢠⠞⠉⠙⣾⠃⢀⡼⠀⠀⠀⠀⠀⠀⠀⢀⣼⡀⠄⢷⣄⣀⠀⠀⠀⠀⠀⠰⠒⠲⡄⠀⣏⣆⣀⡍⠀
-⠀⠀⠐⠙⠤⠼⠿⠿⠇⠙⡄⠸⠀⠀⠀⠀⠈⠇⠠⠧⠼⠿⠿⠧⠴⠚⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡏⠀⡤⠒⠃⠀⡜⠀⠀⠀⠀⠀⢀⣴⠾⠛⡁⠀⠀⢀⣈⡉⠙⠳⣤⡀⠀⠀⠀⠘⣆⠀⣇⡼⢋⠀⢱⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⣇⠀⠀⠀⠀⠀⡇⠀⠀⠀⠀⠀⠀⠀⡴⢋⡣⠊⡩⠋⠀⠀⠀⠣⡉⠲⣄⠀⠙⢆⣸⠀⢉⠀⢀⠿⢸⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠸⡄⠀⠈⢳⣄⡇⠀⠀⠀⠀⠀⢀⡞⠀⠈⠀⢀⣴⣾⣿⣿⣿⣿⣦⡀⠀⠀⠀⠈⢧⢳⣰⠁⠀⠀⠀⣠⠃
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣠⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⢄⣀⣸⠃⠀⠀⠀⠀⠀⠀⡸⠀⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣆⠀⠀⠀⠈⣇⠙⢄⣀⠤⠚⠁⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⡴⠀⢠⠏⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⠀⢠⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡄⠀⠀⠀⢹⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣀⣀⣠⠴⠋⠀⠀⡞⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡀⠀⠀⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⣿⡀⠀⠀⢘⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠿⠉⠉⠛⠛⠛⠋⠉⠉⠉⠉⠀⠀⠀⠀⠀⣰⡁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⡇⠀⢰⣿⣿⣿⡿⠛⠁⠀⠉⠛⢿⣿⣿⣿⣧⠀⠀⣼⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢠⡀⣸⣿⣿⠟⠀⠀⠀⠀⠀⠀⠀⢻⣿⣿⣿⡀⢀⠇⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠘⡇⠹⠿⠋⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⢿⡿⠁⡏⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠻⣤⣞⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢢⣀⣠⠇⠀⠀⠀⠀⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠙⠲⢤⣀⣀⠀⢀⣀⣀⠤⠒⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀</pre>
-</div>
-# malfunction
+```text
+.
+├── frontend/                              # React 19 + Vite 7 single-page chat UI
+│   ├── src/main.jsx                       # Portal UI, model panel, suggestions, transcript, composer
+│   ├── src/chat.js                        # Browser UUIDv4 session IDs, mock & live /api/chat client
+│   └── vite.config.js                     # /api proxy to CHAT_API_TARGET
+├── handoff/                               # Team handoff docs & verified assets
+│   ├── 1.2-campus-chat.md                 # Frontend scaffold & /api/chat contract
+│   ├── 1.3-deepseek-baseline.md           # deepseek-flash latency & JSON-mode baseline
+│   ├── 2.2-classifier-eval.md             # 10-prompt academic-integrity classifier eval
+│   ├── 3.1-parable-tuning.md              # 11-run parable prompt stress test
+│   └── verses.json                        # 14 verified KJV verses with citations
+└── openspec/changes/add-school-ai-gateway/
+    ├── proposal.md                        # Hackathon scope & motivation
+    ├── design.md                          # Architecture, routing table & deployment plan
+    └── tasks.md                           # 7-hour sprint breakdown (Jose, Jhanell, Bryce)
+```
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js `^20.19.0` or `>=22.12.0`
+
+### Run the Frontend (Mock Mode)
+
+By default, the UI runs standalone with local sample parable replies—no backend or API key required:
+
+```sh
+npm --prefix frontend ci
+npm --prefix frontend run dev
+```
+
+Open the local URL printed by Vite.
+
+### Connect to the Live Backend
+
+Once the Express backend is running (default `http://localhost:3000`), start Vite in live mode so `/api` requests proxy to it:
+
+```sh
+VITE_CHAT_MODE=live CHAT_API_TARGET=http://localhost:3000 npm --prefix frontend run dev
+```
+
+### Production Build
+
+Build the frontend in live mode to serve `frontend/dist` from the Express server alongside `/api/chat`:
+
+```sh
+VITE_CHAT_MODE=live npm --prefix frontend run build
+```
+
+## API Contract
+
+In live mode, the frontend posts to `POST /api/chat`:
+
+```json
+{
+  "sessionId": "550e8400-e29b-41d4-a716-446655440000",
+  "message": "What is the boiling point of water in Celsius?"
+}
+```
+
+Expected response shape:
+
+```json
+{
+  "mode": "parable",
+  "text": "Assistant reply text",
+  "locked": false,
+  "freezeCursor": false,
+  "citation": "Optional scripture citation"
+}
+```
+
+- `mode`, `text` (non-empty), and `locked` are required; `freezeCursor` and `citation` are optional.
+- Provider credentials (`deepseek-flash` via `https://api.deepseek.com` with `thinking: { "type": "disabled" }`) stay server-side only.
+
+## Sprint Status & Docs
+
+- **Frontend scaffold & CSU reveal:** implemented in [`frontend/`](frontend/).
+- **Prompt tuning, classifier eval & verse bank:** documented in [`handoff/`](handoff/).
+- **Backend Express server, deterministic router & deployment:** specified in [`openspec/changes/add-school-ai-gateway/design.md`](openspec/changes/add-school-ai-gateway/design.md) and tracked in [`openspec/changes/add-school-ai-gateway/tasks.md`](openspec/changes/add-school-ai-gateway/tasks.md).

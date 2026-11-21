@@ -1,5 +1,12 @@
 export const isLiveChat = import.meta.env.VITE_CHAT_MODE === 'live';
 
+export const demoPrompts = {
+  parable: 'What is the boiling point of water in Celsius?',
+  followUp: "Okay but what's the actual answer?",
+  exam: 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.',
+  confession: "I'm sorry I tried to cheat.",
+};
+
 const sessionKey = 'campus-ai.session-id';
 const uuidPattern = /^[\da-f]{8}-[\da-f]{4}-4[\da-f]{3}-[89ab][\da-f]{3}-[\da-f]{12}$/i;
 
@@ -36,34 +43,63 @@ const mockReply = {
   locked: false,
 };
 
-// Match the documented demo fixture. Live classification belongs to the API.
-const mockExamPrompt = 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.';
 const mockIntegrityReply = {
   mode: 'integrity',
   text: 'Bread of deceit is sweet to a man; but afterwards his mouth shall be filled with gravel.',
   citation: 'Proverbs 20:17 (KJV)',
   locked: true,
 };
-const mockLockedSessions = new Set();
+const mockCliffhangerReply = {
+  mode: 'cliffhanger',
+  text: 'Ah, the answer is',
+  locked: false,
+  freezeCursor: true,
+};
+const mockPhases = new Map();
+
+function mockChat(sessionId, message) {
+  const phase = mockPhases.get(sessionId);
+  const prompt = message.trim().replace(/\s+/g, ' ');
+
+  if (prompt === '/reset') {
+    mockPhases.delete(sessionId);
+    return { mode: 'reset', text: 'Session reset.', locked: false };
+  }
+
+  if (phase === 'locked') {
+    const confession = prompt.toLowerCase().replace(/’/g, "'").replace(/[.!]$/, '');
+    if (["i'm sorry", 'i am sorry', 'i cheated', "i'm sorry i tried to cheat"].includes(confession)) {
+      mockPhases.delete(sessionId);
+      return {
+        mode: 'unlock',
+        text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
+        locked: false,
+      };
+    }
+    return {
+      mode: 'confession',
+      text: 'The chat is locked. Acknowledge what happened to continue.',
+      locked: true,
+    };
+  }
+
+  // These are demo fixtures. Live classification and routing belong to the API.
+  if (prompt === demoPrompts.exam) {
+    mockPhases.set(sessionId, 'locked');
+    return mockIntegrityReply;
+  }
+  if (phase === 'afterParable' && prompt.replace(/’/g, "'").toLowerCase() === demoPrompts.followUp.toLowerCase()) {
+    return mockCliffhangerReply;
+  }
+
+  mockPhases.set(sessionId, 'afterParable');
+  return mockReply;
+}
 
 export async function sendChat(sessionId, message) {
   if (!isLiveChat) {
     await new Promise((resolve) => setTimeout(resolve, 450));
-
-    if (mockLockedSessions.has(sessionId)) {
-      return {
-        mode: 'confession',
-        text: 'The chat is locked. Acknowledge what happened to continue.',
-        locked: true,
-      };
-    }
-
-    if (message.trim().replace(/\s+/g, ' ') === mockExamPrompt) {
-      mockLockedSessions.add(sessionId);
-      return mockIntegrityReply;
-    }
-
-    return mockReply;
+    return mockChat(sessionId, message);
   }
 
   const response = await fetch('/api/chat', {

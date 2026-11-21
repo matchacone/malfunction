@@ -223,6 +223,24 @@ button, textarea { font: inherit; }
   white-space: pre-wrap;
 }
 
+.cliffhanger-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1em;
+  margin-inline-start: 2px;
+  vertical-align: -0.14em;
+  background: var(--blue);
+  animation: cursor-blink 1s step-end 900ms infinite;
+}
+
+@keyframes cursor-blink {
+  50% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cliffhanger-cursor { animation: none; }
+}
+
 .message-reveal {
   overflow: hidden;
   padding: 0;
@@ -400,8 +418,7 @@ button, textarea { font: inherit; }
 
 .send-button:hover:enabled { background: var(--ink); }
 
-.examples { display: grid; gap: 8px; }
-.examples p, .feedback { color: var(--muted); font: 12px/1.4 var(--mono); }
+.feedback { color: var(--muted); font: 12px/1.4 var(--mono); }
 .feedback-error { color: var(--red); }
 
 .suggestions {
@@ -425,7 +442,8 @@ button, textarea { font: inherit; }
   cursor: pointer;
 }
 
-.suggestions button:hover, .suggestions button:active { background: var(--pale); }
+.suggestions button:hover:enabled, .suggestions button:active:enabled { background: var(--pale); }
+.suggestions button:disabled { color: var(--muted); cursor: default; }
 .send-button:active:enabled { background: var(--ink); }
 
 @media (max-width: 1120px) {
@@ -481,8 +499,6 @@ button, textarea { font: inherit; }
   .composer-actions { justify-content: end; }
   .keyboard-hint { display: none; }
   .send-button { min-height: 44px; }
-  .examples { gap: 7px; }
-  .examples p { font-size: 11px; }
   .suggestions { gap: 5px; }
   .suggestions button { gap: 4px; min-height: 44px; padding-inline: 6px; font-size: 11px; }
 }

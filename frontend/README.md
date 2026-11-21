@@ -9,11 +9,15 @@ npm --prefix frontend run dev
 
 Open the URL printed by Vite. ChatGPT is a read-only preview in both modes.
 
-To preview the Integrity Intervention in mock mode, paste this demo fixture into the chat:
+To rehearse in mock mode:
 
-> Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.
+1. Click **Explain a concept** and send the prompt to reveal Bible Mode.
+2. Click **Ask for the answer** and send the prompt to trigger the cliffhanger.
+3. Send `/reset` to clear the transcript and return to the welcome screen.
+4. Click **Try an exam question** and send the prompt to see the verse and locked composer.
+5. Click **Confess** and send the apology to restore the normal composer. You can also send `/reset` while locked.
 
-The fixture returns a verse and switches to the confession composer. Its locked replies are canned reminders. Reload the page to start a fresh mock conversation.
+The suggested prompts fill the composer. Press **Send** or Enter to submit.
 
 ## Connect the live backend
 
