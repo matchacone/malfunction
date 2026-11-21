@@ -22,7 +22,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 
 ## 4. Confession and request feedback (4:00–5:30)
 
-- [ ] 4.1 **Jhanell:** Add local confession rules and server-side `/reset`. Test negated apologies, clear admissions, restart at Turn 1, session isolation, and zero provider calls for confession and reset.
+- [x] 4.1 **Jhanell:** Add local confession rules and server-side `/reset`. Test negated apologies, clear admissions, restart at Turn 1, session isolation, and zero provider calls for confession and reset.
 - [ ] 4.2 **Jose:** Finish amber confession UI, loaders, and retry feedback. Verify the exact unlock copy, normal composer restoration, loader cleanup on success/failure, and duplicate-send prevention.
 
 ## 5. Demo controls and integration (5:30–6:30)

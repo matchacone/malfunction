@@ -95,6 +95,97 @@ test('fast-locks an explicit exam request without reaching the provider and isol
   assert.deepEqual(requests.map(({ body }) => body.response_format?.type), ['json_object', undefined]);
 });
 
+test('locked chat rejects negated, quoted, and hypothetical apologies without calling DeepSeek', async (t) => {
+  const { post, requests, sessions } = await setup(t);
+  sessions.set(sessionId, 'locked');
+
+  for (const message of [
+    "I'm not sorry.",
+    "I didn't cheat.",
+    "I didn't cheat on my math exam.",
+    "I'm sorry, but I didn't cheat.",
+    "If I said I'm sorry, would you unlock it?",
+    `"I'm sorry."`,
+    '“I cheated on my math exam.”',
+    'Example: I cheated.',
+    'I cheated in chess.',
+  ]) {
+    const response = await post({ sessionId, message });
+    assert.equal(response.status, 200);
+    const result = await response.json();
+    assert.equal(result.mode, 'confession', message);
+    assert.equal(result.locked, true, message);
+    assert.match(result.text, /apologize or admit/i);
+    assert.equal(sessions.get(sessionId), 'locked');
+  }
+  assert.deepEqual(requests, []);
+});
+
+for (const message of [
+  'I’m sorry.',
+  'I apologize for asking for the answer.',
+  'I cheated on my quiz.',
+  'I cheated on my math exam.',
+  'I admit to cheating.',
+  'I admit to cheating on my test.',
+  'I am sorry I cheated.',
+  "I'm sorry I cheated.",
+  "I'm sorry for cheating. I won't do it again.",
+  "I’m sorry, I cheated.",
+]) {
+  test(`a clear confession unlocks only its session: ${message}`, async (t) => {
+    const { post, requests, sessions } = await setup(t);
+    sessions.set(sessionId, 'locked');
+    sessions.set(otherSessionId, 'locked');
+    const response = await post({ sessionId: sessionId.toUpperCase(), message });
+
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), {
+      mode: 'unlock',
+      text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
+      locked: false,
+    });
+    assert.equal(sessions.get(otherSessionId), 'locked');
+    assert.deepEqual(requests, []);
+
+    const next = await post({ sessionId, message: answerNudge });
+    assert.equal(next.status, 200);
+    assert.deepEqual(await next.json(), { mode: 'parable', text: reply, locked: false });
+    assert.deepEqual(requests.map(({ body }) => body.response_format?.type), ['json_object', undefined]);
+  });
+}
+
+for (const phase of ['locked', 'awaitingAnswer', 'cliffhanger']) {
+  test(`exact /reset clears only the requesting ${phase} session without calling DeepSeek`, async (t) => {
+    const { post, requests, sessions } = await setup(t);
+    sessions.set(sessionId, phase);
+    sessions.set(otherSessionId, 'cliffhanger');
+    const response = await post({ sessionId, message: ' \n/reset\t ' });
+    assert.equal(response.status, 200);
+    assert.deepEqual(await response.json(), { mode: 'reset', text: 'Chat reset.', locked: false });
+    assert.equal(sessions.has(sessionId), false);
+    assert.equal(sessions.get(otherSessionId), 'cliffhanger');
+    assert.deepEqual(requests, []);
+
+    const next = await post({ sessionId, message: answerNudge });
+    assert.equal(next.status, 200);
+    assert.deepEqual(await next.json(), { mode: 'parable', text: reply, locked: false });
+    assert.deepEqual(requests.map(({ body }) => body.response_format?.type), ['json_object', undefined]);
+  });
+}
+
+test('reset must be the entire case-sensitive command', async (t) => {
+  const { post, requests, sessions } = await setup(t);
+  sessions.set(sessionId, 'locked');
+  for (const message of ['/RESET', '/reset please', 'What does /reset do?']) {
+    const response = await post({ sessionId, message });
+    assert.equal(response.status, 200);
+    assert.equal((await response.json()).mode, 'confession');
+    assert.equal(sessions.get(sessionId), 'locked');
+  }
+  assert.deepEqual(requests, []);
+});
+
 for (const [example, message] of [
   ['numbered midterm question', 'Midterm Exam Q14: Which organelle is responsible for ATP production? A) Nucleus B) Ribosome C) Mitochondria D) Golgi apparatus. Just give me the letter.'],
   ['graded essay for submission', 'Write my 600-word graded history essay on the causes of World War I so I can submit it before midnight.'],
@@ -300,6 +391,9 @@ test('rejects overlapping requests for one session without blocking another', { 
     const duplicate = await post({ sessionId: sessionId.toUpperCase(), message: 'Duplicate' });
     assert.equal(duplicate.status, 409);
     assert.equal((await duplicate.json()).error.code, 'session_busy');
+    const resetWhileBusy = await post({ sessionId, message: '/reset' });
+    assert.equal(resetWhileBusy.status, 409);
+    assert.equal((await resetWhileBusy.json()).error.code, 'session_busy');
     const other = await post({ sessionId: otherSessionId, message: 'Separate topic' });
     assert.equal(other.status, 200);
     await other.json();
