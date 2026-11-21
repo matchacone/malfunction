@@ -9,13 +9,13 @@ npm --prefix frontend run dev
 
 Open the URL printed by Vite. ChatGPT is a read-only preview in both modes.
 
-To rehearse in mock mode:
+To rehearse with either setup:
 
 1. Click **Explain a concept** and send the prompt to reveal Bible Mode.
 2. Click **Ask for the answer** and send the prompt to trigger the cliffhanger.
 3. Send `/reset` to clear the transcript and return to the welcome screen.
 4. Click **Try an exam question** and send the prompt to see the verse and locked composer.
-5. Click **Confess** and send the apology to restore the normal composer. You can also send `/reset` while locked.
+5. Click **Confess** and send the apology. Confirm the normal composer returns, then ask a new question to start another Turn 1. You can also send `/reset` while locked.
 
 The suggested prompts fill the composer. Press **Send** or Enter to submit.
 

@@ -104,6 +104,7 @@ test('locked chat rejects negated, quoted, and hypothetical apologies without ca
     "I didn't cheat.",
     "I didn't cheat on my math exam.",
     "I'm sorry, but I didn't cheat.",
+    "I'm sorry I didn't try to cheat.",
     "If I said I'm sorry, would you unlock it?",
     `"I'm sorry."`,
     '“I cheated on my math exam.”',
@@ -130,6 +131,7 @@ for (const message of [
   'I admit to cheating on my test.',
   'I am sorry I cheated.',
   "I'm sorry I cheated.",
+  "I'm sorry I tried to cheat.",
   "I'm sorry for cheating. I won't do it again.",
   "I’m sorry, I cheated.",
 ]) {
