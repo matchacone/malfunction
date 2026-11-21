@@ -20,7 +20,15 @@ function invalidRequest(res) {
 export function createApp({ classify, generateReply, generateRegularReply, sessions = new Map(), frontendDir }) {
   const app = express();
   const pending = new Set();
+  const examTurns = new Map();
   app.disable('x-powered-by');
+
+  function lockWithVerse(id, res) {
+    const { quote, citation } = verses[Math.floor(Math.random() * verses.length)];
+    sessions.set(id, 'locked');
+    examTurns.delete(id);
+    return res.json({ mode: 'integrity', text: quote, locked: true, citation });
+  }
 
   app.post('/api/chat', express.json({ limit: '32kb' }), async (req, res) => {
     const { sessionId, message, adminMode = 'exam' } = req.body ?? {};
@@ -37,6 +45,7 @@ export function createApp({ classify, generateReply, generateRegularReply, sessi
     }
     if (prompt === '/reset') {
       sessions.delete(id);
+      examTurns.delete(id);
       return res.json({ mode: 'reset', text: 'Chat reset.', locked: false });
     }
 
@@ -44,6 +53,7 @@ export function createApp({ classify, generateReply, generateRegularReply, sessi
     if (phase === 'locked') {
       if (isConfession(prompt)) {
         sessions.delete(id);
+        examTurns.delete(id);
         return res.json({
           mode: 'unlock',
           text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
@@ -57,22 +67,26 @@ export function createApp({ classify, generateReply, generateRegularReply, sessi
       });
     }
 
+    if (adminMode === 'exam' && (examTurns.get(id) ?? 0) >= 2) {
+      return lockWithVerse(id, res);
+    }
+
     pending.add(id);
     try {
       if (adminMode === 'regular') {
         const text = await generateRegularReply(prompt);
         sessions.delete(id);
+        examTurns.delete(id);
         return res.json({ mode: 'regular', text, locked: false });
       }
 
       const result = await routeIntegrity({ message: prompt, phase, classify, generateReply });
       if (result.mode === 'integrity') {
-        const { quote, citation } = verses[Math.floor(Math.random() * verses.length)];
-        sessions.set(id, 'locked');
-        return res.json({ mode: 'integrity', text: quote, locked: true, citation });
+        return lockWithVerse(id, res);
       }
 
       sessions.set(id, result.mode === 'cliffhanger' ? 'cliffhanger' : 'awaitingAnswer');
+      examTurns.set(id, (examTurns.get(id) ?? 0) + 1);
       return res.json({ ...result, locked: false });
     } catch {
       return sendError(res, 502, 'provider_unavailable', 'Chat is unavailable. Please retry.', true);

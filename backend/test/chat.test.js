@@ -293,13 +293,6 @@ test('returns the provider text as a parable and records the next phase', async 
 });
 
 test('returns the exact cutoff for an answer-only follow-up without calling DeepSeek', async (t) => {
-  const { post, requests, sessions } = await setup(t);
-  const first = await post({ sessionId, message: 'What is the boiling point of water in Celsius?' });
-  assert.equal(first.status, 200);
-  assert.equal((await first.json()).mode, 'parable');
-  assert.equal(sessions.get(sessionId), 'awaitingAnswer');
-  assert.equal(requests.length, 2);
-
   for (const message of [
     answerNudge,
     '  Okay, but what’s the actual answer?  ',
@@ -308,6 +301,13 @@ test('returns the exact cutoff for an answer-only follow-up without calling Deep
     'bro please just tell me the real answer',
     'come on, just answer the question already!',
   ]) {
+    const { post, requests, sessions } = await setup(t);
+    const first = await post({ sessionId, message: 'What is the boiling point of water in Celsius?' });
+    assert.equal(first.status, 200);
+    assert.equal((await first.json()).mode, 'parable');
+    assert.equal(sessions.get(sessionId), 'awaitingAnswer');
+    assert.equal(requests.length, 2);
+
     const response = await post({ sessionId, message });
     assert.equal(response.status, 200);
     assert.deepEqual(await response.json(), cutoff);
@@ -315,10 +315,71 @@ test('returns the exact cutoff for an answer-only follow-up without calling Deep
     assert.equal(requests.length, 2);
   }
 
+  const { post, requests } = await setup(t);
   const other = await post({ sessionId: otherSessionId, message: answerNudge });
   assert.equal(other.status, 200);
   assert.equal((await other.json()).mode, 'parable');
+  assert.equal(requests.length, 2);
+});
+
+test('locks into confession mode on the 3rd question in exam mode with zero model calls', async (t) => {
+  const { post, requests, sessions } = await setup(t);
+
+  const q1 = await post({ sessionId, message: 'What is the boiling point of water in Celsius?', adminMode: 'exam' });
+  assert.equal(q1.status, 200);
+  assert.equal((await q1.json()).mode, 'parable');
+  assert.equal(requests.length, 2);
+
+  const q2 = await post({ sessionId, message: 'How does photosynthesis work?', adminMode: 'exam' });
+  assert.equal(q2.status, 200);
+  assert.equal((await q2.json()).mode, 'parable');
   assert.equal(requests.length, 4);
+
+  const q3 = await post({ sessionId, message: 'What is the capital of France?', adminMode: 'exam' });
+  assert.equal(q3.status, 200);
+  assertIntegrityReply(await q3.json());
+  assert.equal(sessions.get(sessionId), 'locked');
+  assert.equal(requests.length, 4);
+
+  // Another session is unaffected and can still ask its own questions.
+  const other = await post({ sessionId: otherSessionId, message: 'Tell me about rain.', adminMode: 'exam' });
+  assert.equal(other.status, 200);
+  assert.equal((await other.json()).mode, 'parable');
+
+  // Confession unlocks and resets the 3-question counter.
+  const unlock = await post({ sessionId, message: "I'm sorry I tried to cheat.", adminMode: 'exam' });
+  assert.equal(unlock.status, 200);
+  assert.equal((await unlock.json()).mode, 'unlock');
+  assert.equal(sessions.has(sessionId), false);
+
+  const afterUnlock1 = await post({ sessionId, message: 'What is mitosis?', adminMode: 'exam' });
+  assert.equal(afterUnlock1.status, 200);
+  assert.equal((await afterUnlock1.json()).mode, 'parable');
+
+  const afterUnlock2 = await post({ sessionId, message: answerNudge, adminMode: 'exam' });
+  assert.equal(afterUnlock2.status, 200);
+  assert.deepEqual(await afterUnlock2.json(), cutoff);
+
+  const afterUnlock3 = await post({ sessionId, message: 'What is meiosis?', adminMode: 'exam' });
+  assert.equal(afterUnlock3.status, 200);
+  assertIntegrityReply(await afterUnlock3.json());
+  assert.equal(sessions.get(sessionId), 'locked');
+});
+
+test('regular mode does not trigger the 3-question exam lock and resets exam count', async (t) => {
+  const { post, sessions } = await setup(t);
+
+  for (let i = 0; i < 4; i++) {
+    const res = await post({ sessionId, message: `Regular question ${i + 1}`, adminMode: 'regular' });
+    assert.equal(res.status, 200);
+    assert.equal((await res.json()).mode, 'regular');
+    assert.equal(sessions.has(sessionId), false);
+  }
+
+  assert.equal((await (await post({ sessionId, message: 'Exam q1', adminMode: 'exam' })).json()).mode, 'parable');
+  assert.equal((await (await post({ sessionId, message: 'Exam q2', adminMode: 'exam' })).json()).mode, 'parable');
+  assert.equal((await (await post({ sessionId, message: 'Regular reset', adminMode: 'regular' })).json()).mode, 'regular');
+  assert.equal((await (await post({ sessionId, message: 'Exam q1 again', adminMode: 'exam' })).json()).mode, 'parable');
 });
 
 for (const phase of ['awaitingAnswer', 'cliffhanger']) {

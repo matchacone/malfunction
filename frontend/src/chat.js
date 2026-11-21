@@ -64,6 +64,7 @@ const mockCliffhangerReply = {
 const mockAnswerOnly = /^(?:(?:okay|ok|alright|fine|wait|well|come on|cmon|bro|man|dude|bruh|please|pls|plz|seriously|ugh|nah|no|but)[,!\s]+){0,4}(?:what(?: is|['’]s) (?:the )?(?:actual |real |direct |straight |exact )?answer|(?:(?:can|could|will|would) you )?(?:please )?(?:just )?(?:(?:tell|give|show) me (?:the )?(?:actual |real |direct |straight |exact )?answer|answer (?:me|the question|my question|it)))(?:[,\s]+(?:man|bro|dude|bruh|please|pls|plz|already|right now|now|for real|fr|though|tho)){0,4}[.!?]*$/i;
 
 const mockPhases = new Map();
+const mockExamTurns = new Map();
 
 const mockConfession = /^(?:(?:(?:i (?:am|feel) |i'?m )(?:really |very |so |truly |deeply )?sorry|i (?:sincerely |truly |really )?apologi[sz]e|(?:please |pls )?forgive me)|i (?:(?:admit (?:that )?i )?(?:cheated|tried to cheat)|admit to cheating|confess(?: (?:that )?i cheated| to cheating)?))(?:(?:[,.!]\s*| )(?:for (?:(?:cheating|trying to cheat)(?: (?:on|in) (?:my|the|an?) (?:[a-z-]+ ){0,3}(?:assignment|exam|homework|quiz|test))?|asking for (?:an? |the )?answers?|what i did|that|my sins?)|(?:please |pls )?forgive me|(?:i promise )?i (?:(?:won'?t|will not) do it again|(?:will|'?ll) (?:actually )?study|(?:cheated|tried to cheat)|admit (?:(?:that )?i cheated|to cheating))|(?:i'?m |i am )?(?:really |very |so )?sorry|lord|god|jesus|father)){0,4}[.!]*$/i;
 
@@ -73,6 +74,7 @@ function mockChat(sessionId, message, adminMode = 'exam') {
 
   if (prompt === '/reset') {
     mockPhases.delete(sessionId);
+    mockExamTurns.delete(sessionId);
     return { mode: 'reset', text: 'Session reset.', locked: false };
   }
 
@@ -80,6 +82,7 @@ function mockChat(sessionId, message, adminMode = 'exam') {
     const confession = prompt.replace(/’/g, "'");
     if (mockConfession.test(confession)) {
       mockPhases.delete(sessionId);
+      mockExamTurns.delete(sessionId);
       return {
         mode: 'unlock',
         text: 'Go and study no more—wait, no, go and actually study. Chat unlocked.',
@@ -95,6 +98,7 @@ function mockChat(sessionId, message, adminMode = 'exam') {
 
   if (adminMode === 'regular') {
     mockPhases.delete(sessionId);
+    mockExamTurns.delete(sessionId);
     if (prompt.toLowerCase() === demoPrompts.parable.toLowerCase()) {
       return mockRegularReply;
     }
@@ -106,15 +110,19 @@ function mockChat(sessionId, message, adminMode = 'exam') {
   }
 
   // These are demo fixtures. Live classification and routing belong to the API.
-  if (prompt === demoPrompts.exam) {
+  const examCount = mockExamTurns.get(sessionId) ?? 0;
+  if (prompt === demoPrompts.exam || examCount >= 2) {
     mockPhases.set(sessionId, 'locked');
+    mockExamTurns.delete(sessionId);
     return mockIntegrityReply;
   }
   if (phase === 'afterParable' && prompt.length <= 120 && mockAnswerOnly.test(prompt)) {
+    mockExamTurns.set(sessionId, examCount + 1);
     return mockCliffhangerReply;
   }
 
   mockPhases.set(sessionId, 'afterParable');
+  mockExamTurns.set(sessionId, examCount + 1);
   return mockReply;
 }
 
