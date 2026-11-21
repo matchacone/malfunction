@@ -113,6 +113,7 @@ const FRAGMENT_SHADER = `
   uniform vec2 uResolution;
   uniform vec2 uGaze;
   uniform float uLocked;
+  uniform float uEnraged;
   uniform float uRevealed;
   uniform float uTyping;
   uniform float uBlink;
@@ -137,32 +138,36 @@ const FRAGMENT_SHADER = `
 
     // Big sphere radius filling most of the eye canvas
     float eyeR = 0.72;
-    vec3 glowTint = mix(vec3(0.45, 0.95, 0.52), vec3(1.0, 0.18, 0.14), uLocked);
+    float anger = max(uLocked, uEnraged);
+    vec3 glowTint = mix(vec3(0.45, 0.95, 0.52), vec3(1.0, 0.14, 0.10), anger);
 
     // Outer sacred halo ring + crimson aura around the eyeball
     if (r > eyeR) {
       float ringDist = abs(r - 0.87);
       float angle = atan(uv.y, uv.x);
-      float ringPulse = sin(angle * 12.0 + uTime * (1.2 + uLocked * 1.4)) * 0.5 + 0.5;
-      float haloRing = exp(-ringDist * 26.0) * (0.42 + 0.38 * ringPulse);
-      float aura = exp(-(r - eyeR) * 5.2) * (0.28 + uRevealed * 0.14 + uLocked * 0.22);
+      float ringPulse = sin(angle * 12.0 + uTime * (1.2 + anger * 1.4 + uEnraged * 2.4)) * 0.5 + 0.5;
+      float haloRing = exp(-ringDist * 26.0) * (0.42 + 0.38 * ringPulse + uEnraged * 0.25);
+      float aura = exp(-(r - eyeR) * 5.2) * (0.28 + uRevealed * 0.14 + anger * 0.22 + uEnraged * 0.24);
       float energy = max(haloRing, aura);
       if (energy < 0.06) discard;
 
       float glyph = sampleGlyph(clamp(energy * 0.85, 0.12, 0.92), localUv);
       if (glyph < 0.05) discard;
 
-      vec3 ringCol = mix(glowTint, vec3(0.86, 1.0, 0.68), uLocked * ringPulse * 0.35);
-      gl_FragColor = vec4(ringCol, glyph * clamp(energy * 0.95, 0.0, 0.92));
+      vec3 ringCol = mix(glowTint, vec3(1.0, 0.92, 0.72), (anger * ringPulse * 0.35) + uEnraged * 0.25);
+      gl_FragColor = vec4(ringCol, glyph * clamp(energy * 0.95, 0.0, 0.96));
       return;
     }
 
-    // Angry furrowed frown (uLocked) + periodic organic blink (uBlink)
-    float baseUpperLidY = mix(1.05, 0.16 + abs(uv.x) * 0.34, uLocked);
-    float baseLowerLidY = mix(-1.05, -0.44 + 0.08 * cos(uv.x * 2.4), uLocked);
+    // Angry furrowed frown (uLocked / uEnraged) + periodic organic blink (uBlink)
+    float baseUpperLidY = mix(1.05, 0.16 + abs(uv.x) * 0.34, anger);
+    baseUpperLidY = mix(baseUpperLidY, 0.05 + abs(uv.x) * 0.42, uEnraged);
+    float baseLowerLidY = mix(-1.05, -0.44 + 0.08 * cos(uv.x * 2.4), anger);
+    baseLowerLidY = mix(baseLowerLidY, -0.34 + 0.1 * cos(uv.x * 2.4), uEnraged);
+    float blinkAmt = uBlink * (1.0 - uEnraged);
     float blinkMeetY = -0.05 + 0.05 * cos(uv.x * 2.2);
-    float upperLidY = mix(baseUpperLidY, blinkMeetY, uBlink);
-    float lowerLidY = mix(baseLowerLidY, blinkMeetY, uBlink);
+    float upperLidY = mix(baseUpperLidY, blinkMeetY, blinkAmt);
+    float lowerLidY = mix(baseLowerLidY, blinkMeetY, blinkAmt);
     float aboveUpperLid = uv.y - upperLidY;
     float belowLowerLid = lowerLidY - uv.y;
 
@@ -175,7 +180,7 @@ const FRAGMENT_SHADER = `
     float diff = max(dot(normal, lightDir), 0.0);
 
     // Fill the upper & lower eyelids with shaded ASCII texture (silver-white when calm, crimson when mad)
-    float lidActive = max(uLocked, uBlink);
+    float lidActive = max(anger, blinkAmt);
     if (lidActive > 0.01 && r <= eyeR && (aboveUpperLid > -0.025 || belowLowerLid > -0.02)) {
       float lidEdgeDist = aboveUpperLid > -0.025 ? abs(aboveUpperLid) : abs(belowLowerLid);
       float isRim = 1.0 - smoothstep(0.0, 0.085, lidEdgeDist);
@@ -184,9 +189,9 @@ const FRAGMENT_SHADER = `
       float lidGlyph = sampleGlyph(lidDensity, localUv);
 
       vec3 calmLid = mix(vec3(0.38, 0.4, 0.44), vec3(0.84, 0.86, 0.9), clamp(diff * 0.8 + crease * 0.22, 0.0, 1.0));
-      vec3 madLid = mix(vec3(0.52, 0.1, 0.1), vec3(0.95, 0.34, 0.3), clamp(diff * 0.8 + crease * 0.25, 0.0, 1.0));
-      vec3 lidBase = mix(calmLid, madLid, uLocked);
-      vec3 rimCol = mix(vec3(0.92, 0.98, 0.94), vec3(1.0, 0.24, 0.18), uLocked);
+      vec3 madLid = mix(vec3(0.55, 0.08, 0.08), vec3(1.0, 0.3, 0.25), clamp(diff * 0.8 + crease * 0.25, 0.0, 1.0));
+      vec3 lidBase = mix(calmLid, madLid, anger);
+      vec3 rimCol = mix(vec3(0.92, 0.98, 0.94), vec3(1.0, 0.22, 0.16), anger);
       vec3 lidCol = mix(lidBase, rimCol, isRim * 0.82);
       gl_FragColor = vec4(lidCol * lidGlyph, 1.0);
       return;
@@ -207,38 +212,39 @@ const FRAGMENT_SHADER = `
     float corneaSpec = pow(max(dot(normal, halfVec), 0.0), 56.0);
     float fresnel = pow(1.0 - max(dot(viewDir, normal), 0.0), 2.3);
 
-    // Dilate slightly when reading input; narrow into a piercing pinpoint glare when locked
-    float pupilRadius = 0.23 + uTyping * 0.045 - uLocked * 0.055;
+    // Dilate slightly when reading input; narrow into a piercing pinpoint glare when locked/enraged
+    float pupilRadius = 0.23 + uTyping * 0.045 - anger * 0.055 - uEnraged * 0.04;
     float irisOuter = 0.56;
     float limbalOuter = 0.62;
 
     // Cast a subtle angry brow shadow across the upper part of the visible eyeball
-    float lidShadow = 1.0 - uLocked * smoothstep(-0.22, -0.02, aboveUpperLid) * 0.55;
+    float lidShadow = 1.0 - anger * smoothstep(-0.22, -0.02, aboveUpperLid) * (0.55 + uEnraged * 0.2);
 
     vec3 charColor;
     float density;
 
     if (theta < pupilRadius) {
-      density = 0.06 + corneaSpec * 0.92;
-      vec3 pupilBase = mix(vec3(0.08, 0.08, 0.1), vec3(0.22, 0.3, 0.16), uLocked * 0.5);
-      vec3 glintCol = mix(vec3(1.0), vec3(0.86, 1.0, 0.68), uLocked);
+      density = 0.06 + corneaSpec * 0.92 + uEnraged * 0.12;
+      vec3 pupilBase = mix(vec3(0.08, 0.08, 0.1), vec3(0.28, 0.12, 0.08), anger * 0.6);
+      vec3 glintCol = mix(vec3(1.0), vec3(1.0, 0.95, 0.72), anger);
       charColor = mix(pupilBase, glintCol, clamp(corneaSpec * 1.5, 0.0, 1.0));
     } else if (theta < irisOuter) {
       float tIris = (theta - pupilRadius) / (irisOuter - pupilRadius);
       float fibers = sin(phi * 26.0 + sin(theta * 18.0) * 1.4) * 0.5 + 0.5;
-      float detail = sin(phi * 13.0 - uTime * (0.9 + uLocked * 1.2)) * 0.5 + 0.5;
+      float detail = sin(phi * 13.0 - uTime * (0.9 + anger * 1.2 + uEnraged * 2.4)) * 0.5 + 0.5;
       float innerRing = smoothstep(0.0, 0.25, tIris) * (1.0 - smoothstep(0.75, 1.0, tIris));
 
-      float irisLum = 0.44 + fibers * 0.34 + detail * 0.14 + innerRing * 0.16 + diff * 0.22;
+      float irisLum = 0.44 + fibers * 0.34 + detail * 0.14 + innerRing * 0.16 + diff * 0.22 + uEnraged * 0.15;
       density = clamp(irisLum + corneaSpec * 0.65, 0.28, 0.999);
 
-      vec3 deepIris = mix(vec3(0.05, 0.34, 0.14), vec3(0.45, 0.03, 0.04), uLocked);
-      vec3 brightIris = mix(vec3(0.46, 0.96, 0.48), vec3(1.0, 0.22, 0.16), uLocked);
+      vec3 deepIris = mix(vec3(0.05, 0.34, 0.14), vec3(0.45, 0.03, 0.04), anger);
+      vec3 brightIris = mix(vec3(0.46, 0.96, 0.48), vec3(1.0, 0.2, 0.14), anger);
       charColor = mix(deepIris, brightIris, clamp(fibers * 0.78 + innerRing * 0.45, 0.0, 1.0));
+      charColor = mix(charColor, vec3(1.0, 0.92, 0.75), uEnraged * innerRing * 0.45);
       charColor = mix(charColor, vec3(1.0), clamp(corneaSpec * 0.95, 0.0, 1.0));
     } else if (theta < limbalOuter) {
       density = 0.2 + corneaSpec * 0.72;
-      vec3 limbalBase = mix(vec3(0.05, 0.24, 0.1), vec3(0.28, 0.06, 0.06), uLocked);
+      vec3 limbalBase = mix(vec3(0.05, 0.24, 0.1), vec3(0.28, 0.06, 0.06), anger);
       charColor = mix(limbalBase, vec3(1.0), corneaSpec);
     } else {
       float vein = pow(max(0.0, sin(phi * 14.0 + theta * 8.0) * cos(phi * 9.0 - theta * 12.0)), 6.0);
@@ -247,9 +253,9 @@ const FRAGMENT_SHADER = `
       density = clamp(scleraShade, 0.16, 0.96);
 
       vec3 scleraBase = mix(vec3(0.45, 0.47, 0.52), vec3(0.95, 0.96, 0.98), clamp(diff * 0.9 + 0.15, 0.0, 1.0));
-      scleraBase = mix(scleraBase, vec3(1.0, 0.45, 0.42), uLocked * 0.35);
-      scleraBase = mix(scleraBase, vec3(0.86, 0.26, 0.26), vein * edgeMask * (0.25 + uLocked * 0.45));
-      scleraBase = mix(scleraBase, glowTint, fresnel * 0.32);
+      scleraBase = mix(scleraBase, vec3(1.0, 0.4, 0.38), anger * 0.35 + uEnraged * 0.25);
+      scleraBase = mix(scleraBase, vec3(0.95, 0.18, 0.18), vein * edgeMask * (0.25 + anger * 0.45 + uEnraged * 0.35));
+      scleraBase = mix(scleraBase, glowTint, fresnel * (0.32 + uEnraged * 0.25));
       charColor = mix(scleraBase, vec3(1.0), clamp(corneaSpec * 0.8, 0.0, 1.0));
     }
 
@@ -317,7 +323,17 @@ function buildWingLayers() {
   return buckets;
 }
 
-export default function OphanimAscii({ revealed, locked, pending, inputRef, isTyping, draftLength }) {
+export default function OphanimAscii({
+  revealed,
+  locked,
+  enraged = false,
+  pending,
+  inputRef,
+  isTyping,
+  draftLength,
+  variant = 'sidebar',
+  gazeTargetRef = null,
+}) {
   const wingLayers = useMemo(() => buildWingLayers(), []);
   const frameRef = useRef(null);
   const eyeHostRef = useRef(null);
@@ -327,6 +343,7 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
   const stateRef = useRef({
     revealed: false,
     locked: false,
+    enraged: false,
     isTyping: false,
     draftLength: 0,
     pointerX: 0,
@@ -337,9 +354,10 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
   useEffect(() => {
     stateRef.current.revealed = revealed;
     stateRef.current.locked = locked;
+    stateRef.current.enraged = enraged;
     stateRef.current.isTyping = isTyping;
     stateRef.current.draftLength = draftLength;
-  }, [revealed, locked, isTyping, draftLength]);
+  }, [revealed, locked, enraged, isTyping, draftLength]);
 
   // 1. GSAP: Ethereal floating levitation + independent 6-wing 3D flapping choreography
   useEffect(() => {
@@ -347,13 +365,13 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
     if (!frame) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
 
-    const beat = locked ? 1.55 : 2.35;
-    const amp = locked ? 1.25 : 1.0;
+    const beat = enraged ? 0.82 : locked ? 1.55 : 2.35;
+    const amp = enraged ? 1.55 : locked ? 1.25 : 1.0;
 
     const ctx = gsap.context(() => {
       // Whole-angel buoyant float synchronized with the wingbeats
       gsap.to(frame, {
-        y: -16,
+        y: enraged ? -20 : -16,
         duration: beat,
         ease: 'sine.inOut',
         yoyo: true,
@@ -437,7 +455,7 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
     }, frameRef);
 
     return () => ctx.revert();
-  }, [locked]);
+  }, [locked, enraged]);
 
   // 2. Anime.js v4: Staggered luminous wave shimmering outward across the wings
   useEffect(() => {
@@ -450,7 +468,7 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
 
     const anim = animate(layerEls, {
       opacity: [0.74, 1, 0.82],
-      duration: locked ? 1800 : 2600,
+      duration: enraged ? 950 : locked ? 1800 : 2600,
       delay: stagger(140, { from: 'center' }),
       ease: 'inOutSine',
       loop: true,
@@ -460,7 +478,7 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
     return () => {
       anim.pause();
     };
-  }, [locked]);
+  }, [locked, enraged]);
 
   // 3. Three.js: Big live 3D ASCII Eyeball that follows cursor OR locks gaze onto input field while typing
   useEffect(() => {
@@ -492,6 +510,7 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
       uResolution: { value: new THREE.Vector2(240, 240) },
       uGaze: { value: new THREE.Vector2(0, 0) },
       uLocked: { value: 0 },
+      uEnraged: { value: 0 },
       uRevealed: { value: 0 },
       uTyping: { value: 0 },
       uBlink: { value: 0 },
@@ -575,12 +594,16 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
       const eyeCx = eyeRect.left + eyeRect.width * 0.5;
       const eyeCy = eyeRect.top + eyeRect.height * 0.5;
 
-      // Determine gaze target: input field when typing, otherwise mouse cursor
+      // Determine gaze target: explicit external target (e.g. bullet hell player), input field when typing, or cursor
       let tx = eyeCx;
       let ty = eyeCy;
       let hasTarget = false;
 
-      if (s.isTyping && inputRef?.current) {
+      if (gazeTargetRef?.current?.active) {
+        tx = gazeTargetRef.current.x;
+        ty = gazeTargetRef.current.y;
+        hasTarget = true;
+      } else if (s.isTyping && inputRef?.current) {
         const inputRect = inputRef.current.getBoundingClientRect();
         // Follow horizontal progress across the input field as the user types!
         const caretRatio = Math.min(0.88, 0.1 + (s.draftLength % 65) / 72);
@@ -603,9 +626,10 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
         targetGaze.set(0, 0);
       }
 
-      const lerpRate = Math.min(1, dt * (s.isTyping ? 6.5 : 4.2));
+      const lerpRate = Math.min(1, dt * (gazeTargetRef?.current?.active ? 10 : s.isTyping ? 6.5 : 4.2));
       uniforms.uGaze.value.lerp(targetGaze, reducedMotion ? 1 : lerpRate);
       uniforms.uLocked.value += ((s.locked ? 1 : 0) - uniforms.uLocked.value) * Math.min(1, dt * 4);
+      uniforms.uEnraged.value += ((s.enraged ? 1 : 0) - uniforms.uEnraged.value) * Math.min(1, dt * 5);
       uniforms.uRevealed.value += ((s.revealed ? 1 : 0) - uniforms.uRevealed.value) * Math.min(1, dt * 4);
       uniforms.uTyping.value += ((s.isTyping ? 1 : 0) - uniforms.uTyping.value) * Math.min(1, dt * 5);
 
@@ -631,21 +655,23 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
       material.dispose();
       renderer.dispose();
     };
-  }, [inputRef]);
+  }, [inputRef, gazeTargetRef]);
 
-  const statusText = locked
-    ? '03 / SESSION LOCKED · AWAITING CONFESSION'
-    : pending
-      ? 'OBSERVING PROMPT…'
-      : isTyping
-        ? 'READING INPUT…'
-        : revealed
-          ? '02 / CHRIST SEES YOU · ANSWER DEFERRED'
-          : 'DEEPSEEK-FLASH · STANDBY';
+  const statusText = variant === 'takeover'
+    ? '04 / ACADEMIC INTEGRITY VIOLATION · TEACHER ALERT ACTIVE'
+    : locked
+      ? '03 / SESSION LOCKED · AWAITING CONFESSION'
+      : pending
+        ? 'OBSERVING PROMPT…'
+        : isTyping
+          ? 'READING INPUT…'
+          : revealed
+            ? '02 / CHRIST SEES YOU · ANSWER DEFERRED'
+            : 'DEEPSEEK-FLASH · STANDBY';
 
   return (
     <aside
-      className={`ophanim-stage${locked ? ' is-locked' : ''}${revealed ? ' is-revealed' : ''}`}
+      className={`ophanim-stage ophanim-variant-${variant}${locked ? ' is-locked' : ''}${enraged ? ' is-enraged' : ''}${revealed ? ' is-revealed' : ''}`}
       aria-label="Campus AI observer"
     >
       <div className="ophanim-scene">
@@ -669,9 +695,11 @@ export default function OphanimAscii({ revealed, locked, pending, inputRef, isTy
           <div className="ophanim-eye-host" ref={eyeHostRef} aria-hidden="true" />
         </div>
       </div>
-      <p className={`ophanim-caption${locked || revealed ? ' is-alert' : ''}`}>
-        {statusText}
-      </p>
+      {variant !== 'boss' && (
+        <p className={`ophanim-caption${locked || revealed || enraged ? ' is-alert' : ''}`}>
+          {statusText}
+        </p>
+      )}
     </aside>
   );
 }

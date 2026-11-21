@@ -893,3 +893,657 @@ button, textarea {
     bottom: 14px;
   }
 }
+
+/* ==========================================================================
+   Glitchy Cheat Temptation Prompt
+   ========================================================================== */
+
+.confession-notice-top {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.cheat-inline-glitch {
+  position: relative;
+  padding: 3px 8px;
+  border: 1px dashed rgba(255, 77, 66, 0.8);
+  border-radius: 2px;
+  background: rgba(255, 38, 30, 0.14);
+  color: var(--crimson);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  animation: glitch-jitter 2.4s steps(2, end) infinite;
+}
+
+.cheat-inline-glitch:hover {
+  background: rgba(255, 77, 66, 0.28);
+  color: var(--lime);
+  border-color: var(--lime);
+}
+
+.cheat-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(0, 0, 0, 0.82);
+  backdrop-filter: blur(5px);
+}
+
+.cheat-modal-scanlines {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 77, 66, 0.06) 0px,
+    rgba(255, 77, 66, 0.06) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+}
+
+.cheat-modal {
+  position: relative;
+  width: min(100%, 560px);
+  border: 1px solid rgba(255, 77, 66, 0.85);
+  border-radius: 6px;
+  background: rgba(8, 2, 2, 0.94);
+  box-shadow:
+    -3px 0 0 rgba(255, 42, 36, 0.55),
+    3px 0 0 rgba(219, 255, 173, 0.4),
+    0 24px 80px rgba(255, 32, 24, 0.28);
+  overflow: hidden;
+  animation: cheat-modal-flicker 3.2s infinite;
+}
+
+.cheat-modal-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 77, 66, 0.45);
+  background: rgba(255, 40, 32, 0.14);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+}
+
+.cheat-modal-code {
+  color: var(--crimson);
+  font-weight: 600;
+}
+
+.cheat-modal-blink {
+  color: var(--lime);
+  animation: cursor-blink 0.85s step-end infinite;
+}
+
+.cheat-modal-body {
+  display: grid;
+  gap: 16px;
+  padding: 24px 24px 26px;
+}
+
+.cheat-modal-kicker {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: var(--amber);
+}
+
+.cheat-glitch-title {
+  position: relative;
+  font-family: var(--font-display);
+  font-size: clamp(26px, 4.2vw, 38px);
+  font-weight: 700;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+  color: var(--ink);
+  text-transform: uppercase;
+}
+
+.cheat-glitch-title::before,
+.cheat-glitch-title::after {
+  content: attr(data-text);
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.cheat-glitch-title::before {
+  color: var(--crimson);
+  transform: translate(-2px, 0);
+  clip-path: inset(12% 0 58% 0);
+  animation: glitch-slice-a 1.8s steps(2, end) infinite;
+}
+
+.cheat-glitch-title::after {
+  color: var(--lime);
+  transform: translate(2px, 0);
+  clip-path: inset(62% 0 8% 0);
+  animation: glitch-slice-b 1.5s steps(2, end) infinite;
+}
+
+.cheat-modal-desc {
+  font-family: var(--font-serif);
+  font-size: 16.5px;
+  line-height: 1.5;
+  color: var(--ink-soft);
+}
+
+.cheat-modal-desc strong {
+  color: var(--crimson);
+  font-family: var(--font-mono);
+  font-size: 14px;
+}
+
+.cheat-modal-warning {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 12px;
+  border: 1px solid rgba(255, 77, 66, 0.3);
+  background: rgba(255, 77, 66, 0.08);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  color: var(--amber);
+}
+
+.cheat-modal-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding-top: 6px;
+}
+
+.cheat-btn {
+  flex: 1 1 200px;
+  min-height: 46px;
+  padding: 10px 16px;
+  border-radius: 3px;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: transform 0.12s ease, background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.cheat-btn-yes {
+  border: 1px solid var(--crimson);
+  background: rgba(255, 45, 36, 0.24);
+  color: #ffffff;
+  box-shadow: -2px 0 0 rgba(255, 45, 36, 0.7), 2px 0 0 rgba(219, 255, 173, 0.65);
+  animation: glitch-jitter 2s steps(2, end) infinite;
+}
+
+.cheat-btn-yes:hover {
+  background: var(--crimson);
+  color: #000000;
+  transform: translate(-1px, -1px);
+}
+
+.cheat-btn-no {
+  border: 1px solid var(--line-strong);
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--ink-soft);
+}
+
+.cheat-btn-no:hover {
+  border-color: var(--lime);
+  color: var(--lime);
+}
+
+/* ==========================================================================
+   Bullet Hell Arena Takeover
+   ========================================================================== */
+
+.bullet-hell-arena {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  overflow: hidden;
+  background: #000000;
+  user-select: none;
+  touch-action: none;
+  cursor: crosshair;
+}
+
+.bullet-hell-arena.is-phase2 {
+  background: #100000;
+}
+
+.bullet-hell-boss {
+  position: fixed;
+  top: 46px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0.9;
+}
+
+.ophanim-variant-boss {
+  position: relative;
+  top: 0;
+  gap: 0;
+}
+
+.ophanim-variant-boss .ophanim-art {
+  font-size: clamp(3.6px, 0.45vw, 5.4px);
+  color: rgba(255, 77, 66, 0.92);
+}
+
+.ophanim-variant-boss .ophanim-eye-host {
+  width: clamp(92px, 10vw, 136px);
+  height: clamp(92px, 10vw, 136px);
+}
+
+.ophanim-stage.is-enraged .ophanim-art {
+  color: #ff382e;
+  text-shadow: 0 0 12px rgba(255, 45, 36, 0.65);
+}
+
+.ophanim-stage.is-enraged .ophanim-scene {
+  animation: angry-tremor 0.14s steps(2, end) infinite;
+}
+
+.bullet-hell-canvas {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 5;
+  display: block;
+}
+
+.bh-hud {
+  position: fixed;
+  top: 14px;
+  left: 18px;
+  right: 18px;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  pointer-events: none;
+}
+
+.bh-hud-group {
+  display: grid;
+  gap: 6px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 77, 66, 0.55);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.bh-phase-tag {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.11em;
+  color: var(--crimson);
+}
+
+.bh-stats {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-soft);
+}
+
+.bh-hp {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.bh-pip {
+  width: 14px;
+  height: 10px;
+  border: 1px solid rgba(219, 255, 173, 0.55);
+  background: transparent;
+}
+
+.bh-pip.is-full {
+  background: var(--lime);
+  box-shadow: 0 0 8px rgba(219, 255, 173, 0.6);
+}
+
+.bh-graze {
+  color: var(--amber);
+}
+
+.bh-timer-box {
+  min-width: min(290px, 100%);
+  display: grid;
+  gap: 7px;
+  padding: 10px 14px;
+  border: 1px solid rgba(255, 77, 66, 0.55);
+  border-radius: 4px;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(4px);
+}
+
+.bh-timer-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  font-family: var(--font-mono);
+}
+
+.bh-timer-label {
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  color: var(--ink-soft);
+}
+
+.bh-timer-value {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--lime);
+}
+
+.bullet-hell-arena.is-phase2 .bh-timer-value {
+  color: var(--crimson);
+}
+
+.bh-progress-track {
+  height: 5px;
+  background: rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+}
+
+.bh-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--amber), var(--crimson));
+  transition: width 0.06s linear;
+}
+
+.bh-phase2-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 12;
+  display: grid;
+  place-content: center;
+  gap: 10px;
+  text-align: center;
+  padding: 24px;
+  background: rgba(18, 0, 0, 0.58);
+  pointer-events: none;
+}
+
+.bh-phase2-eyebrow {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: var(--lime);
+}
+
+.bh-phase2-sub {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--amber);
+}
+
+.bh-controls-hint {
+  position: fixed;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  padding: 6px 12px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.72);
+  font-family: var(--font-mono);
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  color: var(--ink-muted);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+/* ==========================================================================
+   Post-Death Angry ASCII Art Takeover + Teacher Alarm Screen
+   ========================================================================== */
+
+.caught-takeover {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: #050000;
+  padding: 20px;
+  user-select: none;
+  cursor: not-allowed;
+}
+
+.caught-strobe {
+  position: fixed;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at 50% 48%,
+    rgba(255, 36, 28, 0.28) 0%,
+    rgba(160, 10, 10, 0.16) 45%,
+    rgba(0, 0, 0, 0.84) 100%
+  );
+  animation: alarm-strobe 0.76s ease-in-out infinite;
+}
+
+.caught-scanlines {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    rgba(255, 45, 36, 0.08) 0px,
+    rgba(255, 45, 36, 0.08) 1px,
+    transparent 1px,
+    transparent 4px
+  );
+}
+
+.caught-content {
+  position: relative;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  max-width: 100%;
+}
+
+.caught-siren-bar {
+  display: inline-flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 8px 18px;
+  border: 1px solid var(--crimson);
+  background: rgba(255, 34, 26, 0.22);
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.4vw, 13px);
+  font-weight: 600;
+  letter-spacing: 0.15em;
+  color: #ffffff;
+  text-transform: uppercase;
+  box-shadow: 0 0 28px rgba(255, 45, 36, 0.45);
+  animation: alarm-flash 0.76s steps(2, end) infinite;
+}
+
+.caught-siren-sep {
+  color: var(--crimson);
+}
+
+.ophanim-variant-takeover {
+  position: relative;
+  top: 0;
+  gap: 14px;
+}
+
+.ophanim-variant-takeover .ophanim-art {
+  font-size: clamp(5.2px, 0.92vw, 11px);
+  color: #ff3e34;
+  text-shadow: 0 0 16px rgba(255, 45, 36, 0.75);
+}
+
+.ophanim-variant-takeover .ophanim-eye-host {
+  width: clamp(150px, 22vw, 280px);
+  height: clamp(150px, 22vw, 280px);
+}
+
+.caught-footer {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  text-align: center;
+}
+
+.caught-headline {
+  font-family: var(--font-display);
+  font-size: clamp(20px, 3vw, 34px);
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: var(--crimson);
+  text-shadow: 0 0 20px rgba(255, 45, 36, 0.65);
+}
+
+.caught-lock-status {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  color: #ffffff;
+  opacity: 0.85;
+}
+
+.caught-audio-meter {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+}
+
+.caught-audio-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  letter-spacing: 0.14em;
+  color: var(--amber);
+}
+
+.caught-bars {
+  display: inline-flex;
+  align-items: flex-end;
+  gap: 4px;
+  height: 22px;
+}
+
+.caught-bar {
+  width: 5px;
+  height: 100%;
+  background: var(--crimson);
+  transform-origin: bottom;
+  animation: audio-bar-pulse 0.42s ease-in-out infinite alternate;
+}
+
+@keyframes glitch-slice-a {
+  0%, 100% { clip-path: inset(10% 0 65% 0); transform: translate(-2px, 0); }
+  25% { clip-path: inset(40% 0 30% 0); transform: translate(3px, -1px); }
+  50% { clip-path: inset(70% 0 5% 0); transform: translate(-3px, 1px); }
+  75% { clip-path: inset(20% 0 50% 0); transform: translate(2px, 0); }
+}
+
+@keyframes glitch-slice-b {
+  0%, 100% { clip-path: inset(60% 0 12% 0); transform: translate(2px, 0); }
+  30% { clip-path: inset(15% 0 60% 0); transform: translate(-3px, 1px); }
+  60% { clip-path: inset(45% 0 25% 0); transform: translate(3px, -1px); }
+  85% { clip-path: inset(75% 0 4% 0); transform: translate(-2px, 0); }
+}
+
+@keyframes glitch-jitter {
+  0%, 88%, 100% { transform: translate(0, 0); }
+  90% { transform: translate(-2px, 1px) skewX(-2deg); }
+  93% { transform: translate(2px, -1px) skewX(2deg); }
+  96% { transform: translate(-1px, 0); }
+}
+
+@keyframes cheat-modal-flicker {
+  0%, 94%, 100% { opacity: 1; }
+  95% { opacity: 0.88; transform: translateX(-1px); }
+  97% { opacity: 0.96; transform: translateX(1px); }
+}
+
+@keyframes angry-tremor {
+  0% { transform: translate(0, 0); }
+  25% { transform: translate(-2px, 1px); }
+  50% { transform: translate(2px, -1px); }
+  75% { transform: translate(-1px, -2px); }
+  100% { transform: translate(1px, 2px); }
+}
+
+@keyframes alarm-strobe {
+  0%, 100% { opacity: 0.45; }
+  50% { opacity: 1; }
+}
+
+@keyframes alarm-flash {
+  0%, 49% { background: rgba(255, 34, 26, 0.24); border-color: var(--crimson); }
+  50%, 100% { background: rgba(255, 45, 36, 0.82); border-color: #ffffff; }
+}
+
+@keyframes audio-bar-pulse {
+  from { transform: scaleY(0.25); background: var(--amber); }
+  to { transform: scaleY(1); background: var(--crimson); }
+}
+
+@media (max-width: 680px) {
+  .bh-controls-hint {
+    font-size: 9px;
+    white-space: normal;
+    text-align: center;
+    max-width: calc(100% - 24px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cheat-inline-glitch,
+  .cheat-modal,
+  .cheat-glitch-title::before,
+  .cheat-glitch-title::after,
+  .cheat-btn-yes,
+  .ophanim-stage.is-enraged .ophanim-scene,
+  .caught-strobe,
+  .caught-siren-bar,
+  .caught-bar {
+    animation: none;
+  }
+}

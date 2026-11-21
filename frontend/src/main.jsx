@@ -1,4 +1,4 @@
-import { StrictMode, useEffect, useRef, useState } from 'react';
+import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import gsap from 'gsap';
 import { ArrowUp, CornerDownLeft } from 'lucide-react';
@@ -6,7 +6,11 @@ import '@fontsource/ibm-plex-mono/latin-400.css';
 import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
 import AsciiBackdrop from './AsciiBackdrop.jsx';
+import BulletHellGame from './BulletHellGame.jsx';
+import CaughtTakeover from './CaughtTakeover.jsx';
+import CheatPromptModal from './CheatPromptModal.jsx';
 import OphanimAscii from './OphanimAscii.jsx';
+import { primeAlarmAudio } from './alarmAudio.js';
 import bossMusic from './assets/boss-music.mp3';
 import { demoPrompts, getSessionId, isLiveChat, sendChat } from './chat.js';
 import './styles.css';
@@ -220,6 +224,11 @@ function App() {
   const [error, setError] = useState(false);
   const [isInputFocused, setIsInputFocused] = useState(false);
   const [recentlyTyped, setRecentlyTyped] = useState(false);
+  const [failedConfessions, setFailedConfessions] = useState(0);
+  const [confessionEntries, setConfessionEntries] = useState(0);
+  const [cheatOfferOpen, setCheatOfferOpen] = useState(false);
+  const [cheatOfferReason, setCheatOfferReason] = useState(null);
+  const [stage, setStage] = useState('portal'); // 'portal' | 'bullet-hell' | 'caught'
   const typingTimer = useRef(null);
   const requestInFlight = useRef(false);
   const transcriptEnd = useRef(null);
@@ -233,6 +242,18 @@ function App() {
   const revealed = messages.some((message) => message.mode === 'parable');
   const awaitingAnswer = adminMode === 'exam' && (latestReply?.mode === 'parable' || latestReply?.mode === 'cliffhanger');
   const isTyping = isInputFocused && (recentlyTyped || draft.length > 0);
+  const cheatOfferUnlocked = failedConfessions >= 3 || confessionEntries > 3;
+
+  const handlePlayerDeath = useCallback(() => {
+    setStage('caught');
+  }, []);
+
+  function handleAcceptCheat() {
+    primeAlarmAudio();
+    if (audioRef.current) audioRef.current.pause();
+    setCheatOfferOpen(false);
+    setStage('bullet-hell');
+  }
 
   const quickFills = locked
     ? [{ label: 'Confess', prompt: demoPrompts.confession }]
@@ -264,13 +285,13 @@ function App() {
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!locked || !audio) return;
+    if (stage !== 'portal' || !locked || !audio) return;
 
     audio.currentTime = 0;
     // Leave the native controls available if the browser still blocks autoplay.
     audio.play().catch(() => {});
     return () => audio.pause();
-  }, [locked]);
+  }, [locked, stage]);
 
   useEffect(
     () => () => {
@@ -314,8 +335,29 @@ function App() {
       const reply = await sendChat(sessionId, message, adminMode);
       if (reply.mode === 'reset') {
         setMessages([]);
+        setFailedConfessions(0);
+        setConfessionEntries(0);
+        setCheatOfferOpen(false);
+        setCheatOfferReason(null);
       } else {
         setMessages((previous) => [...previous, { ...reply, role: 'assistant' }]);
+        if (reply.mode === 'integrity') {
+          const nextEntries = confessionEntries + 1;
+          setConfessionEntries(nextEntries);
+          if (nextEntries > 3) {
+            setCheatOfferReason('entries');
+            setCheatOfferOpen(true);
+          }
+        } else if (reply.mode === 'confession') {
+          const nextFails = failedConfessions + 1;
+          setFailedConfessions(nextFails);
+          if (nextFails >= 3) {
+            setCheatOfferReason('failed');
+            setCheatOfferOpen(true);
+          }
+        } else if (reply.mode === 'unlock') {
+          setCheatOfferOpen(false);
+        }
       }
     } catch {
       if (!isReset) setMessages((previous) => previous.slice(0, -1));
@@ -340,6 +382,14 @@ function App() {
     setError(false);
     markTyping();
     composerInput.current?.focus();
+  }
+
+  if (stage === 'bullet-hell') {
+    return <BulletHellGame onPlayerDeath={handlePlayerDeath} />;
+  }
+
+  if (stage === 'caught') {
+    return <CaughtTakeover />;
   }
 
   return (
@@ -409,7 +459,19 @@ function App() {
             <form className={locked ? 'confession-composer' : undefined} onSubmit={handleSubmit}>
               {locked && (
                 <div className="confession-notice">
-                  <p className="confession-eyebrow">CONFESSION REQUIRED</p>
+                  <div className="confession-notice-top">
+                    <p className="confession-eyebrow">CONFESSION REQUIRED</p>
+                    {cheatOfferUnlocked && (
+                      <button
+                        type="button"
+                        className="cheat-inline-glitch"
+                        data-text="ERR_0x666 // REALLY WANT TO CHEAT?"
+                        onClick={() => setCheatOfferOpen(true)}
+                      >
+                        ERR_0x666 // REALLY WANT TO CHEAT?
+                      </button>
+                    )}
+                  </div>
                   <p id="confession-instructions">Acknowledge what happened to unlock the chat.</p>
                 </div>
               )}
@@ -474,6 +536,14 @@ function App() {
         <span className={`dot-menu-orb${locked ? ' is-locked' : ''}`} aria-hidden="true" />
         <span className="dot-menu-badge">{dotStatus}</span>
       </footer>
+
+      {cheatOfferOpen && (
+        <CheatPromptModal
+          reason={cheatOfferReason ?? (confessionEntries > 3 ? 'entries' : 'failed')}
+          onAcceptCheat={handleAcceptCheat}
+          onDecline={() => setCheatOfferOpen(false)}
+        />
+      )}
     </div>
   );
 }
