@@ -667,7 +667,7 @@ export default function OphanimAscii({
           ? 'READING INPUT…'
           : revealed
             ? '02 / CHRIST SEES YOU · ANSWER DEFERRED'
-            : 'DEEPSEEK-FLASH · STANDBY';
+            : 'SERAPHIM · STANDBY';
 
   return (
     <aside

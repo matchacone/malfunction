@@ -2,6 +2,8 @@ import { StrictMode, useCallback, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import gsap from 'gsap';
 import { ArrowUp, CornerDownLeft } from 'lucide-react';
+import Markdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 import '@fontsource/ibm-plex-mono/latin-400.css';
 import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
@@ -33,6 +35,19 @@ const parodyLoadingLines = [
 const replyHeadings = {
   confession: 'CONFESSION REQUIRED',
   unlock: 'CONFESSION ACCEPTED',
+};
+
+const markdownPlugins = [remarkGfm];
+
+const markdownComponents = {
+  a: ({ node: _node, ...props }) => <a {...props} target="_blank" rel="noopener noreferrer" />,
+  h1: ({ node: _node, ...props }) => <h3 className="md-h1" {...props} />,
+  h2: ({ node: _node, ...props }) => <h3 className="md-h2" {...props} />,
+  table: ({ node: _node, ...props }) => (
+    <div className="markdown-table-wrap">
+      <table {...props} />
+    </div>
+  ),
 };
 
 function Welcome() {
@@ -192,11 +207,17 @@ function Transcript({ messages, transcriptEnd, locked, audioRef }) {
               </header>
             ) : (
               <h2 className="message-sender">
-                {message.role === 'user' ? 'YOU' : replyHeadings[message.mode] ?? 'DEEPSEEK'}
+                {message.role === 'user' ? 'YOU' : replyHeadings[message.mode] ?? 'SERAPHIM'}
               </h2>
             )}
             {message.mode === 'cliffhanger' && message.freezeCursor ? (
               <Cliffhanger text={message.text} />
+            ) : message.role === 'assistant' ? (
+              <div className="message-text message-markdown">
+                <Markdown remarkPlugins={markdownPlugins} components={markdownComponents}>
+                  {message.text}
+                </Markdown>
+              </div>
             ) : (
               <p className="message-text">{message.text}</p>
             )}
@@ -407,7 +428,7 @@ function App() {
 
           <div className="masthead-controls">
             <span className="model-link model-link-active" aria-current="true">
-              DeepSeek · {isLiveChat ? 'Live' : 'Sample replies'}
+              Seraphim · {isLiveChat ? 'Live' : 'Sample replies'}
             </span>
             <button className="model-link model-link-preview" type="button" disabled>
               ChatGPT · Preview only
