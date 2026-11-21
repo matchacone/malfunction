@@ -7,6 +7,7 @@ import '@fontsource/ibm-plex-mono/latin-500.css';
 import '@fontsource/ibm-plex-mono/latin-600.css';
 import AsciiBackdrop from './AsciiBackdrop.jsx';
 import OphanimAscii from './OphanimAscii.jsx';
+import heavenlyMusic from './assets/heavenly-music.mp3';
 import { demoPrompts, getSessionId, isLiveChat, sendChat } from './chat.js';
 import './styles.css';
 
@@ -66,7 +67,23 @@ function Welcome() {
   );
 }
 
-function IntegrityMessage({ text, citation }) {
+function IntegrityMessage({ text, citation, active }) {
+  const audioRef = useRef(null);
+
+  useEffect(() => {
+    const audio = audioRef.current;
+    if (!active || !audio) return;
+
+    const frame = requestAnimationFrame(() => {
+      // Leave the native controls available when the browser blocks autoplay.
+      audio.play().catch(() => {});
+    });
+    return () => {
+      cancelAnimationFrame(frame);
+      audio.pause();
+    };
+  }, [active]);
+
   return (
     <article className="message message-integrity">
       <header className="integrity-heading">
@@ -77,6 +94,9 @@ function IntegrityMessage({ text, citation }) {
         <blockquote>{`“${text}”`}</blockquote>
         <figcaption>{citation}</figcaption>
       </figure>
+      {active && (
+        <audio className="integrity-audio" ref={audioRef} src={heavenlyMusic} controls aria-label="Heavenly music" />
+      )}
     </article>
   );
 }
@@ -146,8 +166,9 @@ function RequestFeedback({ revealed, locked }) {
   );
 }
 
-function Transcript({ messages, transcriptEnd }) {
+function Transcript({ messages, transcriptEnd, locked }) {
   const listRef = useRef(null);
+  const activeIntegrity = locked ? messages.findLastIndex((message) => message.mode === 'integrity') : -1;
   const firstParable = messages.findIndex(
     (message) => message.role === 'assistant' && message.mode === 'parable',
   );
@@ -170,7 +191,7 @@ function Transcript({ messages, transcriptEnd }) {
     <div className="transcript" ref={listRef} role="log" aria-label="Conversation">
       {messages.map((message, index) =>
         message.mode === 'integrity' ? (
-          <IntegrityMessage key={index} text={message.text} citation={message.citation} />
+          <IntegrityMessage key={index} text={message.text} citation={message.citation} active={index === activeIntegrity} />
         ) : (
           <article
             className={`message message-${message.role}${index === firstParable ? ' message-reveal' : ''}`}
@@ -335,7 +356,7 @@ function App() {
 
       <main className="workspace" aria-label="CSU chat">
         <div className="chat">
-          {hasMessages ? <Transcript messages={messages} transcriptEnd={transcriptEnd} /> : <Welcome />}
+          {hasMessages ? <Transcript messages={messages} transcriptEnd={transcriptEnd} locked={locked} /> : <Welcome />}
 
           {!hasMessages && <div className="workspace-rule" aria-hidden="true" />}
 
