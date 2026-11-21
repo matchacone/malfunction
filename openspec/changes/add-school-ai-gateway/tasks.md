@@ -5,7 +5,7 @@ Use `design.md` for the API and routing contract and `specs/school-ai-gateway/sp
 ## 1. Live chat baseline (0:00–1:00)
 
 - [ ] 1.1 **Jhanell:** By 0:20, agree with Jose and Bryce on the chat contract, success/error fixtures, and classifier schema. Scaffold Express, the session store, and the DeepSeek adapter; document local launch and verify the endpoint returns a live reply.
-- [ ] 1.2 **Jose:** Scaffold React/Vite chat with browser session IDs and mock responses. Add portal branding, DeepSeek live and ChatGPT preview labels. Verify a live browser reply through Jhanell’s endpoint by 1:00 and confirm the preview cannot send requests.
+- [x] 1.2 **Jose:** Scaffold React/Vite chat with browser session IDs and mock responses. Add portal branding, DeepSeek live and ChatGPT preview labels. Verify a live browser reply through Jhanell’s endpoint by 1:00 and confirm the preview cannot send requests.
 - [x] 1.3 **Bryce:** Smoke-test `deepseek-flash` for plain text and JSON with thinking disabled. Hand Jhanell a working starter prompt for each call and record baseline latency and output format.
 
 ## 2. Integrity intervention (1:00–2:30)
