@@ -24,28 +24,30 @@ function createCompletionClient({
   baseUrl = 'https://api.deepseek.com',
   model = 'deepseek-flash',
   timeoutMs = 15_000,
+  disableThinking = true,
 }) {
   const endpoint = `${baseUrl.replace(/\/+$/, '')}/chat/completions`;
+  const headers = { 'Content-Type': 'application/json' };
+  if (apiKey) headers.Authorization = `Bearer ${apiKey}`;
 
   return async function complete({ prompt, message, settings }) {
+    const payload = {
+      model,
+      stream: false,
+      ...settings,
+      messages: [
+        { role: 'system', content: prompt },
+        { role: 'user', content: message },
+      ],
+    };
+    if (disableThinking) payload.thinking = { type: 'disabled' };
+
     const response = await fetch(endpoint, {
       method: 'POST',
       redirect: 'error',
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-      },
+      headers,
       signal: AbortSignal.timeout(timeoutMs),
-      body: JSON.stringify({
-        model,
-        thinking: { type: 'disabled' },
-        stream: false,
-        ...settings,
-        messages: [
-          { role: 'system', content: prompt },
-          { role: 'user', content: message },
-        ],
-      }),
+      body: JSON.stringify(payload),
     });
     if (!response.ok) {
       await response.body?.cancel();
