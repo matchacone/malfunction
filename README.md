@@ -4,7 +4,7 @@ A Malfunction Hackathon stage demo of a mock school AI portal (**Bible Mode Acti
 
 ## How It Works
 
-The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-flash`) as the active model and **ChatGPT** as a disabled, preview-only option. Every prompt is routed deterministically by the server across four behaviors:
+The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-flash`) as the active model and **ChatGPT** as a disabled, preview-only option. The full rehearsal flow in mock mode covers four behaviors:
 
 | Mode | Trigger | Behavior |
 | --- | --- | --- |
@@ -17,6 +17,7 @@ The portal presents a Campus Managed AI Gateway with **DeepSeek** (`deepseek-fla
 
 ```text
 .
+├── backend/                               # Express chat API and DeepSeek integration
 ├── frontend/                              # React 19 + Vite 7 single-page chat UI
 │   ├── src/main.jsx                       # Portal UI, model panel, suggestions, transcript, composer
 │   ├── src/chat.js                        # Browser UUIDv4 session IDs, mock & live /api/chat client
@@ -52,15 +53,17 @@ Open the local URL printed by Vite.
 
 ### Connect to the Live Backend
 
-Once the Express backend is running (default `http://localhost:3000`), start Vite in live mode so `/api` requests proxy to it:
+Start Express using the [backend quickstart](backend/README.md). It listens on `http://127.0.0.1:3001` by default. Start Vite in live mode to proxy `/api` requests to Express.
 
 ```sh
-VITE_CHAT_MODE=live CHAT_API_TARGET=http://localhost:3000 npm --prefix frontend run dev
+VITE_CHAT_MODE=live CHAT_API_TARGET=http://127.0.0.1:3001 npm --prefix frontend run dev
 ```
+
+Live mode supports parables, the cliffhanger, and integrity lock. Confession recovery and `/reset` are available in mock mode while backend task 4.1 is pending.
 
 ### Production Build
 
-Build the frontend in live mode to serve `frontend/dist` from the Express server alongside `/api/chat`:
+Build the frontend in live mode. The deployment plan serves `frontend/dist` alongside `/api/chat`.
 
 ```sh
 VITE_CHAT_MODE=live npm --prefix frontend run build
@@ -96,4 +99,5 @@ Expected response shape:
 
 - **Frontend scaffold & CSU reveal:** implemented in [`frontend/`](frontend/).
 - **Prompt tuning, classifier eval & verse bank:** documented in [`handoff/`](handoff/).
-- **Backend Express server, deterministic router & deployment:** specified in [`openspec/changes/add-school-ai-gateway/design.md`](openspec/changes/add-school-ai-gateway/design.md) and tracked in [`openspec/changes/add-school-ai-gateway/tasks.md`](openspec/changes/add-school-ai-gateway/tasks.md).
+- See the [backend quickstart and API contract](backend/README.md) for the live chat baseline.
+- See the [OpenSpec task list](openspec/changes/add-school-ai-gateway/tasks.md) for the remaining routing, deployment, and rehearsal work.
