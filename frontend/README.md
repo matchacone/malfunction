@@ -44,8 +44,5 @@ For the full stage run, use the [90-second cue sheet and backup playback steps](
 
 ## Production build
 
-For same-origin hosting, build in live mode and serve `frontend/dist` from Express alongside `/api/chat`:
-
-```sh
-VITE_CHAT_MODE=live npm --prefix frontend run build
-```
+For same-origin hosting, follow the [production build instructions](../README.md#production-build).
+Express serves `frontend/dist` alongside `/api/chat`.
