@@ -1,5 +1,5 @@
 :root {
-  --bg: #000000;
+  --bg: #040201;
   --surface: rgba(0, 0, 0, 0.56);
   --surface-subtle: rgba(0, 0, 0, 0.36);
   --ink: #ffffff;
@@ -64,6 +64,21 @@ button, textarea {
   z-index: 0;
   pointer-events: none;
   overflow: hidden;
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(18, 9, 3, 0.32) 0%,
+    rgba(8, 4, 2, 0.85) 55%,
+    rgba(2, 1, 0, 0.98) 100%
+  );
+}
+
+.ascii-backdrop.is-locked {
+  background: radial-gradient(
+    ellipse at 50% 45%,
+    rgba(22, 5, 4, 0.34) 0%,
+    rgba(10, 3, 2, 0.86) 55%,
+    rgba(2, 1, 1, 0.98) 100%
+  );
 }
 
 .ascii-backdrop-canvas {
@@ -77,8 +92,8 @@ button, textarea {
   inset: 0;
   background: radial-gradient(
     ellipse at 50% 50%,
-    rgba(0, 0, 0, 0.24) 0%,
-    rgba(0, 0, 0, 0.1) 65%,
+    rgba(0, 0, 0, 0.16) 0%,
+    rgba(0, 0, 0, 0.06) 65%,
     rgba(0, 0, 0, 0.02) 100%
   );
 }
@@ -100,9 +115,9 @@ button, textarea {
 }
 
 .masthead-inner {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 16px;
   width: min(100% - 48px, 1384px);
   min-height: 58px;

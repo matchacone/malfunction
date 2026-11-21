@@ -431,15 +431,7 @@ function App() {
             <span className="brand-sub">· CAMPUS AI</span>
           </div>
 
-          <p className="portal-tagline">Campus Managed AI Gateway</p>
-
           <div className="masthead-controls">
-            <span className="model-link model-link-active" aria-current="true">
-              Seraphim · {isLiveChat ? 'Live' : 'Sample replies'}
-            </span>
-            <button className="model-link model-link-preview" type="button" disabled>
-              ChatGPT · Preview only
-            </button>
             <div className="admin-controls">
               <span className="admin-label">
                 <span className={`admin-dot${adminMode === 'exam' ? ' is-exam' : ''}`} aria-hidden="true" />
